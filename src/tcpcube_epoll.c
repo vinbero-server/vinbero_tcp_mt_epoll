@@ -50,6 +50,8 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, *server_socket, &epoll_event);
     int epoll_max_events = 1024;
     struct epoll_event *epoll_events = malloc(sizeof(struct epoll_event) * epoll_max_events);
+    size_t client_buffer_size = 1024;
+    char* client_buffer = malloc(sizeof(client_buffer_size));
 
     for(int client_socket, epoll_event_count, mutex_trylock_result, module_service_result;;)
     {
@@ -79,7 +81,7 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
             }
             else
             {
-                if((module_service_result = TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_service(module, &epoll_events[index].data.fd)) == 0)
+                if((module_service_result = TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_service(module, &epoll_events[index].data.fd, client_buffer, client_buffer_size)) == 0)
                 {
                     epoll_ctl(epoll_fd, EPOLL_CTL_DEL, epoll_events[index].data.fd, NULL);
                     close(epoll_events[index].data.fd);

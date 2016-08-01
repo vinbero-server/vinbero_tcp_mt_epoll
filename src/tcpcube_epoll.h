@@ -7,7 +7,7 @@ struct tcpcube_epoll_module
 {
     void* dl_handle;
     int (*tcpcube_epoll_module_init)(struct tcpcube_module_args*, struct tcpcube_module_list*);
-    int (*tcpcube_epoll_module_service)(struct tcpcube_module*, int*);
+    int (*tcpcube_epoll_module_service)(struct tcpcube_module*, int*, char*, size_t);
     int (*tcpcube_epoll_module_destroy)(struct tcpcube_module*);
 };
 
