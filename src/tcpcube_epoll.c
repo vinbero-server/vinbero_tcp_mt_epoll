@@ -45,7 +45,7 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
     fcntl(*server_socket, F_SETFL, fcntl(*server_socket, F_GETFL, 0) | O_NONBLOCK);
     int epoll_fd = epoll_create1(0);
     struct epoll_event epoll_event;
-    epoll_event.events = EPOLLIN;
+    epoll_event.events = EPOLLIN | EPOLLET;
     epoll_event.data.fd = *server_socket;
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, *server_socket, &epoll_event);
     int epoll_max_events = 1024;
@@ -62,7 +62,7 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
                 if((mutex_trylock_result = pthread_mutex_trylock(server_socket_mutex)) != 0)
                 {
                     if(mutex_trylock_result != EBUSY)
-                        warn("%s: %u", __FILE__, __LINE__);
+                        warnx("%s: %u: pthread_mutex_trylock() failed", __FILE__, __LINE__);
                     continue;
                 }
                 if((client_socket = accept(*server_socket, NULL, NULL)) == -1)
