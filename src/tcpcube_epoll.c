@@ -68,7 +68,6 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
                 if((client_socket = accept(*server_socket, NULL, NULL)) == -1)
                 {
                     pthread_mutex_unlock(server_socket_mutex);
-                    warn("%s: %u", __FILE__, __LINE__);
                     continue;
                 }
                 pthread_mutex_unlock(server_socket_mutex);
