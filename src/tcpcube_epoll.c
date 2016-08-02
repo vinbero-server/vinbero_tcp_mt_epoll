@@ -46,7 +46,8 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
     int epoll_fd = epoll_create1(0);
     struct epoll_event epoll_event;
     epoll_event.events = EPOLLIN | EPOLLET;
-    epoll_event.data.fd = *server_socket;
+    epoll_event.data.ptr = malloc(sizeof(struct tcpcube_epoll_data));
+    ((struct tcpcube_epoll_data*)epoll_event.data.ptr)->fd = *server_socket;
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, *server_socket, &epoll_event);
     int epoll_max_events = 1024;
     struct epoll_event *epoll_events = malloc(sizeof(struct epoll_event) * epoll_max_events);
@@ -57,7 +58,7 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
             err(EXIT_FAILURE, "%s: %u", __FILE__, __LINE__);
         for(int index = 0; index < epoll_event_count; ++index)
         {
-            if(epoll_events[index].data.fd == *server_socket)
+            if(((struct tcpcube_epoll_data*)epoll_events[index].data.ptr)->fd == *server_socket)
             {
                 if((mutex_trylock_result = pthread_mutex_trylock(server_socket_mutex)) != 0)
                 {
@@ -76,15 +77,17 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
 
                 fcntl(client_socket, F_SETFL, fcntl(client_socket, F_GETFL, 0) | O_NONBLOCK);
                 epoll_event.events = EPOLLIN | EPOLLET;
-                epoll_event.data.fd = client_socket;
+                epoll_event.data.ptr = malloc(sizeof(struct tcpcube_epoll_data));
+                ((struct tcpcube_epoll_data*)epoll_event.data.ptr)->fd = client_socket;
                 epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &epoll_event);
             }
             else
             {
-                if((module_service_result = TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_service(module, &epoll_events[index].data.fd)) == 0)
+                if((module_service_result = TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_service(module, epoll_events[index].data.ptr)) == 0)
                 {
-                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, epoll_events[index].data.fd, NULL);
-                    close(epoll_events[index].data.fd);
+                    epoll_ctl(epoll_fd, EPOLL_CTL_DEL, ((struct tcpcube_epoll_data*)epoll_events[index].data.ptr)->fd, NULL);
+                    close(((struct tcpcube_epoll_data*)epoll_events[index].data.ptr)->fd);
+                    free(epoll_events[index].data.ptr);
                 }
                 else if(module_service_result == -1)
                     warnx("%s: %u: tcpcube_epoll_module_service() failed", __FILE__, __LINE__);
