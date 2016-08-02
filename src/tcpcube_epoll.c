@@ -67,6 +67,8 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
                 }
                 if((client_socket = accept(*server_socket, NULL, NULL)) == -1)
                 {
+                    if(errno != EAGAIN)
+                        warn("%s: %u", __FILE__, __LINE__);
                     pthread_mutex_unlock(server_socket_mutex);
                     continue;
                 }
