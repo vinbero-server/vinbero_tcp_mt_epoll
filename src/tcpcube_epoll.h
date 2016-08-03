@@ -6,7 +6,7 @@
 struct tcpcube_epoll_data
 {
     int fd;
-    void* custom_data;
+    void* ptr;
 };
 
 struct tcpcube_epoll_module

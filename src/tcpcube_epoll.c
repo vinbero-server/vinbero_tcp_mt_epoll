@@ -77,7 +77,7 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
 
                 fcntl(client_socket, F_SETFL, fcntl(client_socket, F_GETFL, 0) | O_NONBLOCK);
                 epoll_event.events = EPOLLIN | EPOLLET;
-                epoll_event.data.ptr = malloc(sizeof(struct tcpcube_epoll_data));
+                epoll_event.data.ptr = calloc(1, sizeof(struct tcpcube_epoll_data));
                 ((struct tcpcube_epoll_data*)epoll_event.data.ptr)->fd = client_socket;
                 epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &epoll_event);
             }
