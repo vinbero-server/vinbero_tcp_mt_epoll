@@ -28,6 +28,9 @@ int tcpcube_module_init(struct tcpcube_module_args* module_args, struct tcpcube_
     if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_init = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_init")) == NULL)
         errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_init()", __FILE__, __LINE__);
 
+    if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_tlinit = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_tlinit")) == NULL)
+        errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_tlinit()", __FILE__, __LINE__);
+
     if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_service = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_service")) == NULL)
         errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_service()", __FILE__, __LINE__);
 
@@ -40,6 +43,12 @@ int tcpcube_module_init(struct tcpcube_module_args* module_args, struct tcpcube_
     if(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_init(GONC_LIST_ELEMENT_NEXT(module_args), module_list) == -1)
         errx(EXIT_FAILURE, "%s: %u: tcpcube_epoll_module_init() failed", __FILE__, __LINE__);
 
+    return 0;
+}
+
+int tcpcube_module_tlinit(struct tcpcube_module* module)
+{
+    TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_tlinit(module);
     return 0;
 }
 
