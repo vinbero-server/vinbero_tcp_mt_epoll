@@ -31,6 +31,9 @@ int tcpcube_module_init(struct tcpcube_module_args* module_args, struct tcpcube_
     if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_service = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_service")) == NULL)
         errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_service()", __FILE__, __LINE__);
 
+    if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_tldestroy = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_tldestroy")) == NULL)
+        errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_tldestroy()", __FILE__, __LINE__);
+
     if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_destroy = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_destroy")) == NULL)
         errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_destroy()", __FILE__, __LINE__);
 
@@ -95,6 +98,13 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
         }
     }
 
+    return 0;
+}
+
+int tcpcube_module_tldestroy(struct tcpcube_module* module)
+{
+    TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_tldestroy(GONC_LIST_ELEMENT_NEXT(module));
+    warnx("tcpcube_module_tldestroy()");
     return 0;
 }
 
