@@ -3,17 +3,7 @@
 
 #include <tcpcube/tcpcube_module.h>
 #include <libgonc/gonc_list.h>
-
-struct tcpcube_epoll_cldata
-{
-    void* data;
-    GONC_LIST_ELEMENT(struct tcpcube_epoll_cldata);
-};
-
-struct tcpcube_epoll_cldata_list
-{
-    GONC_LIST(struct tcpcube_epoll_cldata);
-};
+#include "tcpcube_epoll_cldata.h"
 
 struct tcpcube_epoll_module
 {
@@ -37,7 +27,6 @@ struct tcpcube_epoll_tlmodule
     struct tcpcube_epoll_cldata* cldata_list_array;
     size_t cldata_array_size;
 };
-
 
 int tcpcube_module_init(struct tcpcube_module_args* module_args, struct tcpcube_module_list* module_list);
 int tcpcube_module_tlinit(struct tcpcube_module* module, struct tcpcube_module_args* module_args);
