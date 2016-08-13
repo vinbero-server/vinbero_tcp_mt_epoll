@@ -10,65 +10,65 @@
 #include <unistd.h>
 #include <tucube/tucube_module.h>
 #include <libgonc/gonc_list.h>
-#include "tucube_tepoll.h"
-#include "tucube_tepoll_cldata.h"
+#include "tucube_tcp_epoll.h"
+#include "tucube_tcp_epoll_cldata.h"
 
 int tucube_module_init(struct tucube_module_args* module_args, struct tucube_module_list* module_list)
 {
     if(GONC_LIST_ELEMENT_NEXT(module_args) == NULL)
-        errx(EXIT_FAILURE, "%s: %u: tucube_tepoll requires another module", __FILE__, __LINE__);
+        errx(EXIT_FAILURE, "%s: %u: tucube_tcp_epoll requires another module", __FILE__, __LINE__);
 
     struct tucube_module* module = malloc(sizeof(struct tucube_module));
     GONC_LIST_ELEMENT_INIT(module);
     GONC_LIST_APPEND(module_list, module);
 
-    module->object = malloc(sizeof(struct tucube_tepoll_module));
-    module->object_size = sizeof(struct tucube_tepoll_module);
-    TUCUBE_MODULE_CAST(module->object, struct tucube_tepoll_module*)->tlmodule_key = malloc(sizeof(pthread_key_t));
-    pthread_key_create(TUCUBE_MODULE_CAST(module->object, struct tucube_tepoll_module*)->tlmodule_key, NULL);
+    module->object = malloc(sizeof(struct tucube_tcp_epoll_module));
+    module->object_size = sizeof(struct tucube_tcp_epoll_module);
+    TUCUBE_MODULE_CAST(module->object, struct tucube_tcp_epoll_module*)->tlmodule_key = malloc(sizeof(pthread_key_t));
+    pthread_key_create(TUCUBE_MODULE_CAST(module->object, struct tucube_tcp_epoll_module*)->tlmodule_key, NULL);
 
     if((TUCUBE_MODULE_CAST(module->object,
-         struct tucube_tepoll_module*)->dl_handle = dlopen(GONC_LIST_ELEMENT_NEXT(module_args)->module_path.chars, RTLD_LAZY)) == NULL)
+         struct tucube_tcp_epoll_module*)->dl_handle = dlopen(GONC_LIST_ELEMENT_NEXT(module_args)->module_path.chars, RTLD_LAZY)) == NULL)
         err(EXIT_FAILURE, "%s: %u", __FILE__, __LINE__);
 
     if((TUCUBE_MODULE_CAST(module->object,
-         struct tucube_tepoll_module*)->tucube_tepoll_module_init = dlsym(TUCUBE_MODULE_CAST(module->object,
-              struct tucube_tepoll_module*)->dl_handle, "tucube_tepoll_module_init")) == NULL)
-        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tepoll_module_init()", __FILE__, __LINE__);
+         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_init = dlsym(TUCUBE_MODULE_CAST(module->object,
+              struct tucube_tcp_epoll_module*)->dl_handle, "tucube_tcp_epoll_module_init")) == NULL)
+        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tcp_epoll_module_init()", __FILE__, __LINE__);
 
     if((TUCUBE_MODULE_CAST(module->object,
-         struct tucube_tepoll_module*)->tucube_tepoll_module_tlinit = dlsym(TUCUBE_MODULE_CAST(module->object,
-              struct tucube_tepoll_module*)->dl_handle, "tucube_tepoll_module_tlinit")) == NULL)
-        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tepoll_module_tlinit()", __FILE__, __LINE__);
+         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_tlinit = dlsym(TUCUBE_MODULE_CAST(module->object,
+              struct tucube_tcp_epoll_module*)->dl_handle, "tucube_tcp_epoll_module_tlinit")) == NULL)
+        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tcp_epoll_module_tlinit()", __FILE__, __LINE__);
 
     if((TUCUBE_MODULE_CAST(module->object,
-         struct tucube_tepoll_module*)->tucube_tepoll_module_clinit = dlsym(TUCUBE_MODULE_CAST(module->object,
-              struct tucube_tepoll_module*)->dl_handle, "tucube_tepoll_module_clinit")) == NULL)
-        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tepoll_module_clinit()", __FILE__, __LINE__);
+         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_clinit = dlsym(TUCUBE_MODULE_CAST(module->object,
+              struct tucube_tcp_epoll_module*)->dl_handle, "tucube_tcp_epoll_module_clinit")) == NULL)
+        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tcp_epoll_module_clinit()", __FILE__, __LINE__);
 
     if((TUCUBE_MODULE_CAST(module->object,
-         struct tucube_tepoll_module*)->tucube_tepoll_module_service = dlsym(TUCUBE_MODULE_CAST(module->object,
-              struct tucube_tepoll_module*)->dl_handle, "tucube_tepoll_module_service")) == NULL)
-        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tepoll_module_service()", __FILE__, __LINE__);
+         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_service = dlsym(TUCUBE_MODULE_CAST(module->object,
+              struct tucube_tcp_epoll_module*)->dl_handle, "tucube_tcp_epoll_module_service")) == NULL)
+        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tcp_epoll_module_service()", __FILE__, __LINE__);
 
     if((TUCUBE_MODULE_CAST(module->object,
-         struct tucube_tepoll_module*)->tucube_tepoll_module_cldestroy = dlsym(TUCUBE_MODULE_CAST(module->object,
-              struct tucube_tepoll_module*)->dl_handle, "tucube_tepoll_module_cldestroy")) == NULL)
-        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tepoll_module_cldestroy()", __FILE__, __LINE__);
+         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_cldestroy = dlsym(TUCUBE_MODULE_CAST(module->object,
+              struct tucube_tcp_epoll_module*)->dl_handle, "tucube_tcp_epoll_module_cldestroy")) == NULL)
+        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tcp_epoll_module_cldestroy()", __FILE__, __LINE__);
 
     if((TUCUBE_MODULE_CAST(module->object,
-         struct tucube_tepoll_module*)->tucube_tepoll_module_tldestroy = dlsym(TUCUBE_MODULE_CAST(module->object,
-              struct tucube_tepoll_module*)->dl_handle, "tucube_tepoll_module_tldestroy")) == NULL)
-        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tepoll_module_tldestroy()", __FILE__, __LINE__);
+         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_tldestroy = dlsym(TUCUBE_MODULE_CAST(module->object,
+              struct tucube_tcp_epoll_module*)->dl_handle, "tucube_tcp_epoll_module_tldestroy")) == NULL)
+        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tcp_epoll_module_tldestroy()", __FILE__, __LINE__);
 
     if((TUCUBE_MODULE_CAST(module->object,
-         struct tucube_tepoll_module*)->tucube_tepoll_module_destroy = dlsym(TUCUBE_MODULE_CAST(module->object,
-              struct tucube_tepoll_module*)->dl_handle, "tucube_tepoll_module_destroy")) == NULL)
-        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tepoll_module_destroy()", __FILE__, __LINE__);
+         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_destroy = dlsym(TUCUBE_MODULE_CAST(module->object,
+              struct tucube_tcp_epoll_module*)->dl_handle, "tucube_tcp_epoll_module_destroy")) == NULL)
+        errx(EXIT_FAILURE, "%s: %u: Unable to find tucube_tcp_epoll_module_destroy()", __FILE__, __LINE__);
 
     if(TUCUBE_MODULE_CAST(module->object,
-         struct tucube_tepoll_module*)->tucube_tepoll_module_init(GONC_LIST_ELEMENT_NEXT(module_args), module_list) == -1)
-        errx(EXIT_FAILURE, "%s: %u: tucube_tepoll_module_init() failed", __FILE__, __LINE__);
+         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_init(GONC_LIST_ELEMENT_NEXT(module_args), module_list) == -1)
+        errx(EXIT_FAILURE, "%s: %u: tucube_tcp_epoll_module_init() failed", __FILE__, __LINE__);
 
     return 0;
 }
@@ -76,10 +76,10 @@ int tucube_module_init(struct tucube_module_args* module_args, struct tucube_mod
 int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args* module_args)
 {
     pthread_setspecific(*TUCUBE_MODULE_CAST(module->object,
-        struct tucube_tepoll_module*)->tlmodule_key, malloc(sizeof(struct tucube_tepoll_tlmodule)));
+        struct tucube_tcp_epoll_module*)->tlmodule_key, malloc(sizeof(struct tucube_tcp_epoll_tlmodule)));
 
     TUCUBE_MODULE_CAST(module->object,
-         struct tucube_tepoll_module*)->tucube_tepoll_module_tlinit(GONC_LIST_ELEMENT_NEXT(module), module_args);
+         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_tlinit(GONC_LIST_ELEMENT_NEXT(module), module_args);
     return 0;
 }
 
@@ -89,7 +89,7 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
     memset(client_socket_array, -1, 1024);
     int* client_timerfd_array = malloc(1024 * sizeof(int));
     memset(client_timerfd_array, -1, 1024);
-    struct tucube_tepoll_cldata_list** cldata_list_array = calloc(1024, sizeof(struct tucube_tepoll_cldata_list*));
+    struct tucube_tcp_epoll_cldata_list** cldata_list_array = calloc(1024, sizeof(struct tucube_tcp_epoll_cldata_list*));
 
     fcntl(*server_socket, F_SETFL, fcntl(*server_socket, F_GETFL, 0) | O_NONBLOCK);
     int epoll_fd = epoll_create1(0);
@@ -129,10 +129,10 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                 }
                 pthread_mutex_unlock(server_socket_mutex);
 
-                cldata_list_array[client_socket] = malloc(sizeof(struct tucube_tepoll_cldata_list));
+                cldata_list_array[client_socket] = malloc(sizeof(struct tucube_tcp_epoll_cldata_list));
                 GONC_LIST_INIT(cldata_list_array[client_socket]);
                 TUCUBE_MODULE_CAST(module->object,
-                     struct tucube_tepoll_module*)->tucube_tepoll_module_clinit(cldata_list_array[client_socket], client_socket);
+                     struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_clinit(cldata_list_array[client_socket], client_socket);
 
                 fcntl(client_socket, F_SETFL, fcntl(client_socket, F_GETFL, 0) | O_NONBLOCK);
                 epoll_event.events = EPOLLIN | EPOLLET;
@@ -159,12 +159,12 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                         warn("%s: %u", __FILE__, __LINE__);
 
                     if((module_service_result = TUCUBE_MODULE_CAST(module->object,
-                         struct tucube_tepoll_module*)->tucube_tepoll_module_service(GONC_LIST_ELEMENT_NEXT(module),
+                         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_service(GONC_LIST_ELEMENT_NEXT(module),
                               GONC_LIST_HEAD(cldata_list_array[epoll_events[index].data.fd]))) == 0)
                     {
                         close(client_timerfd_array[epoll_events[index].data.fd]);
                         close(epoll_events[index].data.fd);
-                        TUCUBE_MODULE_CAST(module->object, struct tucube_tepoll_module*)->tucube_tepoll_module_cldestroy(
+                        TUCUBE_MODULE_CAST(module->object, struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_cldestroy(
                              GONC_LIST_HEAD(cldata_list_array[epoll_events[index].data.fd]));
                         free(cldata_list_array[epoll_events[index].data.fd]);
                         client_timerfd_array[epoll_events[index].data.fd] = -1;
@@ -172,7 +172,7 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                         cldata_list_array[epoll_events[index].data.fd] = NULL;
                     }
                     else if(module_service_result == -1)
-                        warnx("%s: %u: tucube_tepoll_module_service() failed", __FILE__, __LINE__);
+                        warnx("%s: %u: tucube_tcp_epoll_module_service() failed", __FILE__, __LINE__);
                 }
             }
             else if(client_socket_array[epoll_events[index].data.fd] != -1 && client_timerfd_array[epoll_events[index].data.fd] == -1)
@@ -185,7 +185,7 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                     close(epoll_events[index].data.fd);
                     close(client_socket_array[epoll_events[index].data.fd]);
                     TUCUBE_MODULE_CAST(module->object,
-                         struct tucube_tepoll_module*)->tucube_tepoll_module_cldestroy(GONC_LIST_HEAD(cldata_list_array[client_socket_array[epoll_events[index].data.fd]]));
+                         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_cldestroy(GONC_LIST_HEAD(cldata_list_array[client_socket_array[epoll_events[index].data.fd]]));
                     free(cldata_list_array[client_socket_array[epoll_events[index].data.fd]]);
                     client_timerfd_array[client_socket_array[epoll_events[index].data.fd]] = -1;
                     client_socket_array[epoll_events[index].data.fd] = -1;
@@ -201,15 +201,15 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
 
 int tucube_module_tldestroy(struct tucube_module* module)
 {
-    TUCUBE_MODULE_CAST(module->object, struct tucube_tepoll_module*)->tucube_tepoll_module_tldestroy(GONC_LIST_ELEMENT_NEXT(module));
+    TUCUBE_MODULE_CAST(module->object, struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_tldestroy(GONC_LIST_ELEMENT_NEXT(module));
     warnx("tucube_module_tldestroy()");
     return 0;
 }
 
 int tucube_module_destroy(struct tucube_module* module)
 {
-    TUCUBE_MODULE_CAST(module->object, struct tucube_tepoll_module*)->tucube_tepoll_module_destroy(GONC_LIST_ELEMENT_NEXT(module));
-    dlclose(TUCUBE_MODULE_CAST(module->object, struct tucube_tepoll_module*)->dl_handle);
+    TUCUBE_MODULE_CAST(module->object, struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_destroy(GONC_LIST_ELEMENT_NEXT(module));
+    dlclose(TUCUBE_MODULE_CAST(module->object, struct tucube_tcp_epoll_module*)->dl_handle);
     free(module->object);
     free(module);
     return 0;
