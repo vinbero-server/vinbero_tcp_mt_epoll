@@ -21,7 +21,7 @@ struct tcpcube_epoll_module
     int (*tcpcube_epoll_module_init)(struct tcpcube_module_args*, struct tcpcube_module_list*);
     int (*tcpcube_epoll_module_tlinit)(struct tcpcube_module*, struct tcpcube_module_args*);
     int (*tcpcube_epoll_module_clinit)(struct tcpcube_epoll_cldata_list*, int);
-    int (*tcpcube_epoll_module_service)(struct tcpcube_module*, struct tcpcube_epoll_cldata_list*);
+    int (*tcpcube_epoll_module_service)(struct tcpcube_module*, struct tcpcube_epoll_cldata*);
     int (*tcpcube_epoll_module_cldestroy)(struct tcpcube_epoll_cldata*);
     int (*tcpcube_epoll_module_tldestroy)(struct tcpcube_module*);
     int (*tcpcube_epoll_module_destroy)(struct tcpcube_module*);

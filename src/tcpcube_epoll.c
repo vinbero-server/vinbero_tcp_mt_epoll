@@ -60,7 +60,7 @@ int tcpcube_module_tlinit(struct tcpcube_module* module, struct tcpcube_module_a
 {
     pthread_setspecific(*TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tlmodule_key, malloc(sizeof(struct tcpcube_epoll_tlmodule)));
 
-    TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_tlinit(module, module_args);
+    TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_tlinit(GONC_LIST_ELEMENT_NEXT(module), module_args);
     return 0;
 }
 
@@ -105,27 +105,28 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
                 }
                 pthread_mutex_unlock(server_socket_mutex);
 
+                cldata_list_array[client_socket] = malloc(sizeof(struct tcpcube_epoll_cldata_list));
+                GONC_LIST_INIT(cldata_list_array[client_socket]);
+                TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_clinit(cldata_list_array[client_socket], client_socket);
+
                 fcntl(client_socket, F_SETFL, fcntl(client_socket, F_GETFL, 0) | O_NONBLOCK);
                 epoll_event.events = EPOLLIN | EPOLLET;
                 epoll_event.data.fd = client_socket;
                 epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &epoll_event);
 
-                cldata_list_array[client_socket] = malloc(sizeof(struct tcpcube_epoll_cldata_list));
-                GONC_LIST_INIT(cldata_list_array[client_socket]);
-                TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_clinit(cldata_list_array[client_socket], client_socket);
-
-                client_timerfd_array[epoll_events[index].data.fd] = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK);
-                fcntl(client_timerfd_array[epoll_events[index].data.fd], F_SETFL, fcntl(client_timerfd_array[epoll_events[index].data.fd], F_GETFL, 0) | O_NONBLOCK);
-                timerfd_settime(client_timerfd_array[epoll_events[index].data.fd], TFD_TIMER_ABSTIME, &client_itimerspec, NULL);
+                if((client_timerfd_array[client_socket] = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) == -1)
+                    warn("%s: %u", __FILE__, __LINE__);
+                fcntl(client_timerfd_array[client_socket], F_SETFL, fcntl(client_timerfd_array[client_socket], F_GETFL, 0) | O_NONBLOCK);
                 epoll_event.events = EPOLLIN | EPOLLET;
-                epoll_event.data.fd = client_timerfd_array[epoll_events[index].data.fd];
-                epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_timerfd_array[epoll_events[index].data.fd], &epoll_event);
+                epoll_event.data.fd = client_timerfd_array[client_socket];
+                timerfd_settime(client_timerfd_array[client_socket], TFD_TIMER_ABSTIME, &client_itimerspec, NULL);
+                epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_timerfd_array[client_socket], &epoll_event);
             }
             else if(client_timerfd_array[epoll_events[index].data.fd] != -1 && client_socket_array[epoll_events[index].data.fd] == -1)
             {
                 if(epoll_events[index].events & EPOLLIN)
                 {
-                    if((module_service_result = TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_service(module, cldata_list_array[epoll_events[index].data.fd])) == 0)
+                    if((module_service_result = TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_service(GONC_LIST_ELEMENT_NEXT(module), GONC_LIST_HEAD(cldata_list_array[epoll_events[index].data.fd]))) == 0)
                     {
                         close(client_timerfd_array[epoll_events[index].data.fd]);
                         close(epoll_events[index].data.fd);
