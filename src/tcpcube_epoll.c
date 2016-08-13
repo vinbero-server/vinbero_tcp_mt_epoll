@@ -26,31 +26,47 @@ int tcpcube_module_init(struct tcpcube_module_args* module_args, struct tcpcube_
     TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tlmodule_key = malloc(sizeof(pthread_key_t));
     pthread_key_create(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tlmodule_key, NULL);
 
-    if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle = dlopen(GONC_LIST_ELEMENT_NEXT(module_args)->module_path.chars, RTLD_LAZY)) == NULL)
+    if((TCPCUBE_MODULE_CAST(module->object,
+         struct tcpcube_epoll_module*)->dl_handle = dlopen(GONC_LIST_ELEMENT_NEXT(module_args)->module_path.chars, RTLD_LAZY)) == NULL)
         err(EXIT_FAILURE, "%s: %u", __FILE__, __LINE__);
 
-    if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_init = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_init")) == NULL)
+    if((TCPCUBE_MODULE_CAST(module->object,
+         struct tcpcube_epoll_module*)->tcpcube_epoll_module_init = dlsym(TCPCUBE_MODULE_CAST(module->object,
+              struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_init")) == NULL)
         errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_init()", __FILE__, __LINE__);
 
-    if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_tlinit = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_tlinit")) == NULL)
+    if((TCPCUBE_MODULE_CAST(module->object,
+         struct tcpcube_epoll_module*)->tcpcube_epoll_module_tlinit = dlsym(TCPCUBE_MODULE_CAST(module->object,
+              struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_tlinit")) == NULL)
         errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_tlinit()", __FILE__, __LINE__);
 
-    if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_clinit = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_clinit")) == NULL)
+    if((TCPCUBE_MODULE_CAST(module->object,
+         struct tcpcube_epoll_module*)->tcpcube_epoll_module_clinit = dlsym(TCPCUBE_MODULE_CAST(module->object,
+              struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_clinit")) == NULL)
         errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_clinit()", __FILE__, __LINE__);
 
-    if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_service = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_service")) == NULL)
+    if((TCPCUBE_MODULE_CAST(module->object,
+         struct tcpcube_epoll_module*)->tcpcube_epoll_module_service = dlsym(TCPCUBE_MODULE_CAST(module->object,
+              struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_service")) == NULL)
         errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_service()", __FILE__, __LINE__);
 
-    if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_cldestroy = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_cldestroy")) == NULL)
+    if((TCPCUBE_MODULE_CAST(module->object,
+         struct tcpcube_epoll_module*)->tcpcube_epoll_module_cldestroy = dlsym(TCPCUBE_MODULE_CAST(module->object,
+              struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_cldestroy")) == NULL)
         errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_cldestroy()", __FILE__, __LINE__);
 
-    if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_tldestroy = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_tldestroy")) == NULL)
+    if((TCPCUBE_MODULE_CAST(module->object,
+         struct tcpcube_epoll_module*)->tcpcube_epoll_module_tldestroy = dlsym(TCPCUBE_MODULE_CAST(module->object,
+              struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_tldestroy")) == NULL)
         errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_tldestroy()", __FILE__, __LINE__);
 
-    if((TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_destroy = dlsym(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_destroy")) == NULL)
+    if((TCPCUBE_MODULE_CAST(module->object,
+         struct tcpcube_epoll_module*)->tcpcube_epoll_module_destroy = dlsym(TCPCUBE_MODULE_CAST(module->object,
+              struct tcpcube_epoll_module*)->dl_handle, "tcpcube_epoll_module_destroy")) == NULL)
         errx(EXIT_FAILURE, "%s: %u: Unable to find tcpcube_epoll_module_destroy()", __FILE__, __LINE__);
 
-    if(TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_init(GONC_LIST_ELEMENT_NEXT(module_args), module_list) == -1)
+    if(TCPCUBE_MODULE_CAST(module->object,
+         struct tcpcube_epoll_module*)->tcpcube_epoll_module_init(GONC_LIST_ELEMENT_NEXT(module_args), module_list) == -1)
         errx(EXIT_FAILURE, "%s: %u: tcpcube_epoll_module_init() failed", __FILE__, __LINE__);
 
     return 0;
@@ -58,9 +74,11 @@ int tcpcube_module_init(struct tcpcube_module_args* module_args, struct tcpcube_
 
 int tcpcube_module_tlinit(struct tcpcube_module* module, struct tcpcube_module_args* module_args)
 {
-    pthread_setspecific(*TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tlmodule_key, malloc(sizeof(struct tcpcube_epoll_tlmodule)));
+    pthread_setspecific(*TCPCUBE_MODULE_CAST(module->object,
+        struct tcpcube_epoll_module*)->tlmodule_key, malloc(sizeof(struct tcpcube_epoll_tlmodule)));
 
-    TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_tlinit(GONC_LIST_ELEMENT_NEXT(module), module_args);
+    TCPCUBE_MODULE_CAST(module->object,
+         struct tcpcube_epoll_module*)->tcpcube_epoll_module_tlinit(GONC_LIST_ELEMENT_NEXT(module), module_args);
     return 0;
 }
 
@@ -80,8 +98,13 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, *server_socket, &epoll_event);
     int epoll_max_events = 1024;
     struct epoll_event *epoll_events = malloc(sizeof(struct epoll_event) * epoll_max_events);
-    struct timespec client_timespec = {.tv_sec = 10, .tv_nsec = 0};
-    struct itimerspec client_itimerspec = {.it_value = client_timespec, .it_interval = client_timespec};
+
+    struct itimerspec client_itimerspec;
+    client_itimerspec.it_value.tv_sec = 10;
+    client_itimerspec.it_value.tv_nsec = 0;
+    client_itimerspec.it_interval.tv_sec = 10;
+    client_itimerspec.it_interval.tv_nsec = 0;
+
     for(int client_socket, epoll_event_count, mutex_trylock_result, module_service_result;;)
     {
         if((epoll_event_count = epoll_wait(epoll_fd, epoll_events, epoll_max_events, -1)) == -1)
@@ -107,7 +130,8 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
 
                 cldata_list_array[client_socket] = malloc(sizeof(struct tcpcube_epoll_cldata_list));
                 GONC_LIST_INIT(cldata_list_array[client_socket]);
-                TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_clinit(cldata_list_array[client_socket], client_socket);
+                TCPCUBE_MODULE_CAST(module->object,
+                     struct tcpcube_epoll_module*)->tcpcube_epoll_module_clinit(cldata_list_array[client_socket], client_socket);
 
                 fcntl(client_socket, F_SETFL, fcntl(client_socket, F_GETFL, 0) | O_NONBLOCK);
                 epoll_event.events = EPOLLIN | EPOLLET;
@@ -116,21 +140,28 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
 
                 if((client_timerfd_array[client_socket] = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) == -1)
                     warn("%s: %u", __FILE__, __LINE__);
+
+                client_socket_array[client_timerfd_array[client_socket]] = client_socket;
+
                 fcntl(client_timerfd_array[client_socket], F_SETFL, fcntl(client_timerfd_array[client_socket], F_GETFL, 0) | O_NONBLOCK);
                 epoll_event.events = EPOLLIN | EPOLLET;
                 epoll_event.data.fd = client_timerfd_array[client_socket];
-                timerfd_settime(client_timerfd_array[client_socket], TFD_TIMER_ABSTIME, &client_itimerspec, NULL);
+                if(timerfd_settime(client_timerfd_array[client_socket], 0, &client_itimerspec, NULL) == -1)
+                    warn("%s: %u", __FILE__, __LINE__);
                 epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_timerfd_array[client_socket], &epoll_event);
             }
             else if(client_timerfd_array[epoll_events[index].data.fd] != -1 && client_socket_array[epoll_events[index].data.fd] == -1)
             {
                 if(epoll_events[index].events & EPOLLIN)
                 {
-                    if((module_service_result = TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_service(GONC_LIST_ELEMENT_NEXT(module), GONC_LIST_HEAD(cldata_list_array[epoll_events[index].data.fd]))) == 0)
+                    if((module_service_result = TCPCUBE_MODULE_CAST(module->object,
+                         struct tcpcube_epoll_module*)->tcpcube_epoll_module_service(GONC_LIST_ELEMENT_NEXT(module),
+                              GONC_LIST_HEAD(cldata_list_array[epoll_events[index].data.fd]))) == 0)
                     {
                         close(client_timerfd_array[epoll_events[index].data.fd]);
                         close(epoll_events[index].data.fd);
-                        TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_cldestroy(GONC_LIST_HEAD(cldata_list_array[epoll_events[index].data.fd]));
+                        TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_cldestroy(
+                             GONC_LIST_HEAD(cldata_list_array[epoll_events[index].data.fd]));
                         free(cldata_list_array[epoll_events[index].data.fd]);
                         client_timerfd_array[epoll_events[index].data.fd] = -1;
                         client_socket_array[client_timerfd_array[epoll_events[index].data.fd]] = -1;
@@ -142,11 +173,15 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
             }
             else if(client_socket_array[epoll_events[index].data.fd] != -1 && client_timerfd_array[epoll_events[index].data.fd] == -1)
             {
+                warnx("%s: %u: client timed out", __FILE__, __LINE__);
                 if(epoll_events[index].events & EPOLLIN)
                 {
+                    uint64_t value;
+                    read(epoll_events[index].data.fd, &value, sizeof(uint64_t));
                     close(epoll_events[index].data.fd);
                     close(client_socket_array[epoll_events[index].data.fd]);
-                    TCPCUBE_MODULE_CAST(module->object, struct tcpcube_epoll_module*)->tcpcube_epoll_module_cldestroy(GONC_LIST_HEAD(cldata_list_array[client_socket_array[epoll_events[index].data.fd]]));
+                    TCPCUBE_MODULE_CAST(module->object,
+                         struct tcpcube_epoll_module*)->tcpcube_epoll_module_cldestroy(GONC_LIST_HEAD(cldata_list_array[client_socket_array[epoll_events[index].data.fd]]));
                     free(cldata_list_array[client_socket_array[epoll_events[index].data.fd]]);
                     client_timerfd_array[client_socket_array[epoll_events[index].data.fd]] = -1;
                     client_socket_array[epoll_events[index].data.fd] = -1;
@@ -154,7 +189,7 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
                 }
             }
             else
-                warnx("%s: %u: Unexpected file descriptor", __FILE__, __LINE__);
+                warnx("%s: %u: Unexpected file descriptor: %d", __FILE__, __LINE__, epoll_events[index].data.fd);
         }
     }
     return 0;
