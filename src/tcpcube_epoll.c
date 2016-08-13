@@ -154,6 +154,9 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
             {
                 if(epoll_events[index].events & EPOLLIN)
                 {
+                    if(timerfd_settime(client_timerfd_array[epoll_events[index].data.fd], 0, &client_itimerspec, NULL) == -1)
+                        warn("%s: %u", __FILE__, __LINE__);
+
                     if((module_service_result = TCPCUBE_MODULE_CAST(module->object,
                          struct tcpcube_epoll_module*)->tcpcube_epoll_module_service(GONC_LIST_ELEMENT_NEXT(module),
                               GONC_LIST_HEAD(cldata_list_array[epoll_events[index].data.fd]))) == 0)
@@ -173,11 +176,11 @@ int tcpcube_module_start(struct tcpcube_module* module, int* server_socket, pthr
             }
             else if(client_socket_array[epoll_events[index].data.fd] != -1 && client_timerfd_array[epoll_events[index].data.fd] == -1)
             {
-                warnx("%s: %u: client timed out", __FILE__, __LINE__);
+                warnx("%s: %u: Client timed out", __FILE__, __LINE__);
                 if(epoll_events[index].events & EPOLLIN)
                 {
-                    uint64_t value;
-                    read(epoll_events[index].data.fd, &value, sizeof(uint64_t));
+                    uint64_t client_timerfd_value;
+                    read(epoll_events[index].data.fd, &client_timerfd_value, sizeof(uint64_t));
                     close(epoll_events[index].data.fd);
                     close(client_socket_array[epoll_events[index].data.fd]);
                     TCPCUBE_MODULE_CAST(module->object,
