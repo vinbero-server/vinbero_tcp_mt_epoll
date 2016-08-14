@@ -3,7 +3,12 @@
 
 struct tucube_tcp_epoll_cldata
 {
-    void* data;
+    union
+    {
+        int integer;
+        unsigned int uinteger;
+        void* pointer;
+    };
     GONC_LIST_ELEMENT(struct tucube_tcp_epoll_cldata);
 };
 
