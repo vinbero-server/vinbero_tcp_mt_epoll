@@ -94,6 +94,7 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
     fcntl(*server_socket, F_SETFL, fcntl(*server_socket, F_GETFL, 0) | O_NONBLOCK);
     int epoll_fd = epoll_create1(0);
     struct epoll_event epoll_event;
+    memset(&epoll_event, 0, sizeof(struct epoll_event)); // to avoid valgrind warning: syscall param epoll_ctl(event) points to uninitialised byte(s)
     epoll_event.events = EPOLLIN | EPOLLET;
     epoll_event.data.fd = *server_socket;
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, *server_socket, &epoll_event);
