@@ -15,7 +15,6 @@ struct tucube_tcp_epoll_module
     int (*tucube_tcp_epoll_module_cldestroy)(struct tucube_module*, struct tucube_tcp_epoll_cldata*);
     int (*tucube_tcp_epoll_module_tldestroy)(struct tucube_module*);
     int (*tucube_tcp_epoll_module_destroy)(struct tucube_module*);
-    pthread_key_t* tlmodule_key;
 };
 
 struct tucube_tcp_epoll_tlmodule
