@@ -203,7 +203,7 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                 }
             }
             else
-                warnx("%s: %u: Unexpected file descriptor: %d", __FILE__, __LINE__, epoll_events[index].data.fd);
+                errx(EXIT_FAILURE, "%s: %u: Unexpected file descriptor: %d", __FILE__, __LINE__, epoll_events[index].data.fd);
         }
     }
     return 0;
@@ -212,7 +212,8 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
 int tucube_module_tldestroy(struct tucube_module* module)
 {
     TUCUBE_CAST(module->object, struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_tldestroy(GONC_LIST_ELEMENT_NEXT(module));
-    warnx("tucube_module_tldestroy()");
+    struct tucube_tcp_epoll_tlmodule* tlmodule = pthread_getspecific(*module->tlmodule_key);
+    free(tlmodule);
     return 0;
 }
 
