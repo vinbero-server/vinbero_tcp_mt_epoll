@@ -2,6 +2,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <sys/epoll.h>
@@ -76,8 +77,8 @@ int tucube_module_init(struct tucube_module_args* module_args, struct tucube_mod
 int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args* module_args)
 {
     struct tucube_tcp_epoll_tlmodule* tlmodule = malloc(sizeof(struct tucube_tcp_epoll_tlmodule));
-    int worker_max_clients;
     int worker_count = 0;
+    int worker_max_clients;
     GONC_LIST_FOR_EACH(module_args, struct tucube_module_arg, module_arg)
     {
         if(strncmp("tucube-worker-count", module_arg->name.chars, sizeof("tucube-worker-count") - 1) == 0)
@@ -93,7 +94,7 @@ int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args
     if(worker_count == 0)
         errx(EXIT_FAILURE, "Argument tucube-worker-count is required");
 
-    if(worker_max_clients <= 0)
+    if(worker_max_clients < 1 || worker_max_clients == LONG_MIN || worker_max_clients == LONG_MAX)
         worker_max_clients = 1024;
 
     tlmodule->epoll_event_array_size = worker_max_clients + 1 + 3;
