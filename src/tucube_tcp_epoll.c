@@ -87,7 +87,7 @@ int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args
         }
         else if(strncmp("worker-max-clients", module_arg->name.chars, sizeof("worker-max-clients") - 1) == 0)
         {
-            worker_max_clients = strtol(module_arg->value.chars, NULL, 10) + 1;
+            worker_max_clients = strtol(module_arg->value.chars, NULL, 10);
         }
     }
 
@@ -97,20 +97,21 @@ int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args
     if(worker_max_clients < 1 || worker_max_clients == LONG_MIN || worker_max_clients == LONG_MAX)
         worker_max_clients = 1024;
 
-    tlmodule->epoll_event_array_size = worker_max_clients + 1 + 3;
+    tlmodule->epoll_event_array_size = worker_max_clients * 2 + 1; // '* 2': socket, timerfd; '+ 1': server_socket; 
     tlmodule->epoll_event_array = malloc(sizeof(struct epoll_event) * tlmodule->epoll_event_array_size);
 
-    tlmodule->client_array_size = worker_max_clients * worker_count + 1 + 3;
+    tlmodule->client_array_size = worker_max_clients * 2 * worker_count + 1 + 1 + 3; //'+ 1': server_socker; '+ 1': epollfd; '+ 3': stdin, stdout, stderr; multipliying worker_count because file descriptors are shared among threads;
 
     tlmodule->client_socket_array = malloc(tlmodule->client_array_size * sizeof(int));
-    memset(tlmodule->client_socket_array, -1, tlmodule->client_array_size);
+    memset(tlmodule->client_socket_array, -1, tlmodule->client_array_size * sizeof(int));
 
     tlmodule->client_timerfd_array = malloc(tlmodule->client_array_size * sizeof(int));
-    memset(tlmodule->client_timerfd_array, -1, tlmodule->client_array_size);
+    memset(tlmodule->client_timerfd_array, -1, tlmodule->client_array_size * sizeof(int));
 
     tlmodule->cldata_list_array = calloc(tlmodule->client_array_size, sizeof(struct tucube_tcp_epoll_cldata_list*));
 
     pthread_setspecific(*module->tlmodule_key, tlmodule);
+
     TUCUBE_CAST(module->pointer,
          struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_tlinit(GONC_LIST_ELEMENT_NEXT(module), GONC_LIST_ELEMENT_NEXT(module_args));
 
@@ -140,7 +141,6 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
             err(EXIT_FAILURE, "%s: %u", __FILE__, __LINE__);
         for(int index = 0; index < epoll_event_count; ++index)
         {
-            warnx("this fd: %d, server_socket: %d", tlmodule->epoll_event_array[index].data.fd, *server_socket);
             if(tlmodule->epoll_event_array[index].data.fd == *server_socket)
             {
                 if((mutex_trylock_result = pthread_mutex_trylock(server_socket_mutex)) != 0)
@@ -160,6 +160,7 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
 
                 if(client_socket > (tlmodule->client_array_size - 1))
                 {
+                    warnx("%s: %u: Unable to accept more clients", __FILE__, __LINE__);
                     close(client_socket);
                     continue;
                 }
@@ -173,7 +174,8 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                 fcntl(client_socket, F_SETFL, fcntl(client_socket, F_GETFL, 0) | O_NONBLOCK);
                 epoll_event.events = EPOLLIN | EPOLLET;
                 epoll_event.data.fd = client_socket;
-                epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &epoll_event);
+                if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &epoll_event) == -1)
+                    warn("%s: %u", __FILE__, __LINE__);
 
                 if((tlmodule->client_timerfd_array[client_socket] = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) == -1)
                     warn("%s: %u", __FILE__, __LINE__);
@@ -185,9 +187,11 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                 epoll_event.data.fd = tlmodule->client_timerfd_array[client_socket];
                 if(timerfd_settime(tlmodule->client_timerfd_array[client_socket], 0, &client_itimerspec, NULL) == -1)
                     warn("%s: %u", __FILE__, __LINE__);
-                epoll_ctl(epoll_fd, EPOLL_CTL_ADD, tlmodule->client_timerfd_array[client_socket], &epoll_event);
+                if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, tlmodule->client_timerfd_array[client_socket], &epoll_event) == -1)
+                    warn("%s: %u", __FILE__, __LINE__);
             }
-            else if(tlmodule->client_timerfd_array[tlmodule->epoll_event_array[index].data.fd] != -1 && tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd] == -1)
+            else if(tlmodule->client_timerfd_array[tlmodule->epoll_event_array[index].data.fd] != -1 &&
+                 tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd] == -1)
             {
                 if(tlmodule->epoll_event_array[index].events & EPOLLIN)
                 {
