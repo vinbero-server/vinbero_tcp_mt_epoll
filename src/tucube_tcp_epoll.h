@@ -3,6 +3,7 @@
 
 #include <tucube/tucube_module.h>
 #include <libgonc/gonc_list.h>
+#include <sys/epoll.h>
 #include "tucube_tcp_epoll_cldata.h"
 
 struct tucube_tcp_epoll_module
@@ -19,12 +20,12 @@ struct tucube_tcp_epoll_module
 
 struct tucube_tcp_epoll_tlmodule
 {
+    struct epoll_event* epoll_event_array;
+    int epoll_event_array_size;
     int* client_socket_array;
-    size_t client_socket_array_size;
-    int* timerfd_array;
-    size_t timerfd_array_size;
-    struct tucube_tcp_epoll_cldata* cldata_list_array;
-    size_t cldata_array_size;
+    int* client_timerfd_array;
+    struct tucube_tcp_epoll_cldata_list** cldata_list_array;
+    int client_array_size;
 };
 
 int tucube_module_init(struct tucube_module_args* module_args, struct tucube_module_list* module_list);
