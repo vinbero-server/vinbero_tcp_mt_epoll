@@ -21,12 +21,12 @@ int tucube_module_init(struct tucube_module_args* module_args, struct tucube_mod
     if(GONC_LIST_ELEMENT_NEXT(module_args) == NULL)
         errx(EXIT_FAILURE, "%s: %u: tucube_tcp_epoll requires another module", __FILE__, __LINE__);
 
-    struct tucube_module* module = malloc(sizeof(struct tucube_module));
+    struct tucube_module* module = malloc(1 * sizeof(struct tucube_module));
     GONC_LIST_ELEMENT_INIT(module);
     GONC_LIST_APPEND(module_list, module);
 
-    module->pointer = malloc(sizeof(struct tucube_tcp_epoll_module));
-    module->tlmodule_key = malloc(sizeof(pthread_key_t));
+    module->pointer = malloc(1 * sizeof(struct tucube_tcp_epoll_module));
+    module->tlmodule_key = malloc(1 * sizeof(pthread_key_t));
     pthread_key_create(module->tlmodule_key, NULL);
 
     if((TUCUBE_CAST(module->pointer,
@@ -77,7 +77,7 @@ int tucube_module_init(struct tucube_module_args* module_args, struct tucube_mod
 
 int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args* module_args)
 {
-    struct tucube_tcp_epoll_tlmodule* tlmodule = malloc(sizeof(struct tucube_tcp_epoll_tlmodule));
+    struct tucube_tcp_epoll_tlmodule* tlmodule = malloc(1 * sizeof(struct tucube_tcp_epoll_tlmodule));
     int worker_count = 0;
     int worker_max_clients;
     GONC_LIST_FOR_EACH(module_args, struct tucube_module_arg, module_arg)
@@ -99,7 +99,7 @@ int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args
         worker_max_clients = 1024;
 
     tlmodule->epoll_event_array_size = worker_max_clients * 2 + 1; // '* 2': socket, timerfd; '+ 1': server_socket; 
-    tlmodule->epoll_event_array = malloc(sizeof(struct epoll_event) * tlmodule->epoll_event_array_size);
+    tlmodule->epoll_event_array = malloc(tlmodule->epoll_event_array_size * sizeof(struct epoll_event));
 
     tlmodule->client_array_size = worker_max_clients * 2 * worker_count + 1 + 3; //'+ 1': server_socker; '+ 3': stdin, stdout, stderr; multipliying worker_count because file descriptors are shared among threads;
 
@@ -125,7 +125,7 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
     fcntl(*server_socket, F_SETFL, fcntl(*server_socket, F_GETFL, 0) | O_NONBLOCK);
     int epoll_fd = epoll_create1(0);
     struct epoll_event epoll_event;
-    memset(&epoll_event, 0, sizeof(struct epoll_event)); // to avoid valgrind warning: syscall param epoll_ctl(event) points to uninitialised byte(s)
+    memset(&epoll_event, 0, 1 * sizeof(struct epoll_event)); // to avoid valgrind warning: syscall param epoll_ctl(event) points to uninitialised byte(s)
     epoll_event.events = EPOLLIN | EPOLLET;
     epoll_event.data.fd = *server_socket;
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, *server_socket, &epoll_event);
@@ -166,7 +166,7 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                     continue;
                 }
 
-                tlmodule->cldata_list_array[client_socket] = malloc(sizeof(struct tucube_tcp_epoll_cldata_list));
+                tlmodule->cldata_list_array[client_socket] = malloc(1 * sizeof(struct tucube_tcp_epoll_cldata_list));
                 GONC_LIST_INIT(tlmodule->cldata_list_array[client_socket]);
                 TUCUBE_CAST(module->pointer,
                      struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_clinit(GONC_LIST_ELEMENT_NEXT(module),
