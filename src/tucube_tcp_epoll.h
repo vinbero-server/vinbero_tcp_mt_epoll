@@ -4,6 +4,7 @@
 #include <tucube/tucube_module.h>
 #include <libgonc/gonc_list.h>
 #include <sys/epoll.h>
+#include <sys/timerfd.h>
 #include "tucube_tcp_epoll_cldata.h"
 
 struct tucube_tcp_epoll_module
@@ -16,6 +17,7 @@ struct tucube_tcp_epoll_module
     int (*tucube_tcp_epoll_module_cldestroy)(struct tucube_module*, struct tucube_tcp_epoll_cldata*);
     int (*tucube_tcp_epoll_module_tldestroy)(struct tucube_module*);
     int (*tucube_tcp_epoll_module_destroy)(struct tucube_module*);
+    struct itimerspec client_timeout;
 };
 
 struct tucube_tcp_epoll_tlmodule
