@@ -211,9 +211,6 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
 
                 tlmodule->cldata_list_array[client_socket] = malloc(1 * sizeof(struct tucube_tcp_epoll_cldata_list));
                 GONC_LIST_INIT(tlmodule->cldata_list_array[client_socket]);
-                TUCUBE_CAST(module->pointer,
-                     struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_clinit(GONC_LIST_ELEMENT_NEXT(module),
-                          tlmodule->cldata_list_array[client_socket], client_socket);
 
                 fcntl(client_socket, F_SETFL, fcntl(client_socket, F_GETFL, 0) | O_NONBLOCK);
                 epoll_event.events = EPOLLIN | EPOLLET;
@@ -233,6 +230,10 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                     warn("%s: %u", __FILE__, __LINE__);
                 if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, tlmodule->client_timerfd_array[client_socket], &epoll_event) == -1)
                     warn("%s: %u", __FILE__, __LINE__);
+
+                TUCUBE_CAST(module->pointer,
+                     struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_clinit(GONC_LIST_ELEMENT_NEXT(module),
+                          tlmodule->cldata_list_array[client_socket], &tlmodule->client_socket_array[tlmodule->client_timerfd_array[client_socket]]);
             }
             else if(tlmodule->client_timerfd_array[tlmodule->epoll_event_array[index].data.fd] != -1 &&
                  tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd] == -1)
