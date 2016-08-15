@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
 #include <sys/socket.h>
@@ -29,7 +30,7 @@ int tucube_module_init(struct tucube_module_args* module_args, struct tucube_mod
     pthread_key_create(module->tlmodule_key, NULL);
 
     if((TUCUBE_CAST(module->pointer,
-         struct tucube_tcp_epoll_module*)->dl_handle = dlopen(GONC_LIST_ELEMENT_NEXT(module_args)->module_path.chars, RTLD_LAZY)) == NULL)
+         struct tucube_tcp_epoll_module*)->dl_handle = dlopen(GONC_LIST_ELEMENT_NEXT(module_args)->module_path, RTLD_LAZY)) == NULL)
         err(EXIT_FAILURE, "%s: %u", __FILE__, __LINE__);
 
     if((TUCUBE_CAST(module->pointer,
@@ -81,13 +82,13 @@ int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args
     int worker_max_clients;
     GONC_LIST_FOR_EACH(module_args, struct tucube_module_arg, module_arg)
     {
-        if(strncmp("tucube-worker-count", module_arg->name.chars, sizeof("tucube-worker-count") - 1) == 0)
+        if(strncmp("tucube-worker-count", module_arg->name, sizeof("tucube-worker-count") - 1) == 0)
         {
-            worker_count = strtol(module_arg->value.chars, NULL, 10);
+            worker_count = strtol(module_arg->value, NULL, 10);
         }
-        else if(strncmp("worker-max-clients", module_arg->name.chars, sizeof("worker-max-clients") - 1) == 0)
+        else if(strncmp("worker-max-clients", module_arg->name, sizeof("worker-max-clients") - 1) == 0)
         {
-            worker_max_clients = strtol(module_arg->value.chars, NULL, 10);
+            worker_max_clients = strtol(module_arg->value, NULL, 10);
         }
     }
 
