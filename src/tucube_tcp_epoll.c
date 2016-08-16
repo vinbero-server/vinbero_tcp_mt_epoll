@@ -179,7 +179,7 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
     epoll_event.data.fd = *server_socket;
     epoll_ctl(epoll_fd, EPOLL_CTL_ADD, *server_socket, &epoll_event);
 
-    for(int client_socket, epoll_event_count, mutex_trylock_result, module_service_result;;)
+    for(int epoll_event_count;;)
     {
         if((epoll_event_count = epoll_wait(epoll_fd, tlmodule->epoll_event_array, tlmodule->epoll_event_array_size, -1)) == -1)
             err(EXIT_FAILURE, "%s: %u", __FILE__, __LINE__);
@@ -187,6 +187,8 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
         {
             if(tlmodule->epoll_event_array[index].data.fd == *server_socket)
             {
+                int client_socket;
+                int mutex_trylock_result;
                 if((mutex_trylock_result = pthread_mutex_trylock(server_socket_mutex)) != 0)
                 {
                     if(mutex_trylock_result != EBUSY)
@@ -240,6 +242,7 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
             {
                 if(tlmodule->epoll_event_array[index].events & EPOLLIN)
                 {
+                    int module_service_result;
                     if(timerfd_settime(tlmodule->client_timerfd_array[tlmodule->epoll_event_array[index].data.fd], 0, &TUCUBE_CAST(module->pointer, struct tucube_tcp_epoll_module*)->client_timeout, NULL) == -1)
                         warn("%s: %u", __FILE__, __LINE__);
 
@@ -271,17 +274,15 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                 {
                     uint64_t client_timerfd_value;
                     read(tlmodule->epoll_event_array[index].data.fd, &client_timerfd_value, sizeof(uint64_t));
-
+                    int client_socket = tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd];
                     TUCUBE_CAST(module->pointer,
                          struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_cldestroy(GONC_LIST_ELEMENT_NEXT(module),
                               GONC_LIST_HEAD(tlmodule->cldata_list_array[tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd]]));
-
-                    free(tlmodule->cldata_list_array[tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd]]);
+                    free(tlmodule->cldata_list_array[client_socket]);
                     close(tlmodule->epoll_event_array[index].data.fd);
                     close(tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd]);
-
-                    tlmodule->cldata_list_array[tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd]] = NULL;
-                    tlmodule->client_timerfd_array[tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd]] = -1;
+                    tlmodule->cldata_list_array[client_socket] = NULL;
+                    tlmodule->client_timerfd_array[client_socket] = -1;
                     tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd] = -1;
                 }
             }
