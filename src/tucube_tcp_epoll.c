@@ -126,8 +126,6 @@ int tucube_module_init(struct tucube_module_args* module_args, struct tucube_mod
 
 int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args* module_args)
 {
-warnx("call pthread_exit");
-pthread_exit(NULL);
     struct tucube_tcp_epoll_tlmodule* tlmodule = malloc(1 * sizeof(struct tucube_tcp_epoll_tlmodule));
     int worker_count = 0;
     int worker_max_clients;
