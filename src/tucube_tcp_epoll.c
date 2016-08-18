@@ -31,13 +31,13 @@ int tucube_module_init(struct tucube_module_args* module_args, struct tucube_mod
 
     TUCUBE_MODULE_DLOPEN(module, module_args);
 
-    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module*, tucube_tcp_epoll_module_init);
-    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module*, tucube_tcp_epoll_module_tlinit);
-    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module*, tucube_tcp_epoll_module_clinit);
-    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module*, tucube_tcp_epoll_module_service);
-    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module*, tucube_tcp_epoll_module_cldestroy);
-    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module*, tucube_tcp_epoll_module_tldestroy);
-    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module*, tucube_tcp_epoll_module_destroy);
+    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module, tucube_tcp_epoll_module_init);
+    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module, tucube_tcp_epoll_module_tlinit);
+    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module, tucube_tcp_epoll_module_clinit);
+    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module, tucube_tcp_epoll_module_service);
+    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module, tucube_tcp_epoll_module_cldestroy);
+    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module, tucube_tcp_epoll_module_tldestroy);
+    TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_module, tucube_tcp_epoll_module_destroy);
 
     GONC_CAST(module->pointer,
          struct tucube_tcp_epoll_module*)->client_timeout.it_value.tv_sec =
