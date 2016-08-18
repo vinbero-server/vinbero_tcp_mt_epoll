@@ -51,7 +51,7 @@ int tucube_module_init(struct tucube_module_args* module_args, struct tucube_mod
 
     GONC_LIST_FOR_EACH(module_args, struct tucube_module_arg, module_arg)
     {
-        if(strncmp("client-timeout-seconds", module_arg->name, sizeof("client-timeout-seconds") - 1) == 0)
+        if(strncmp("client-timeout-seconds", module_arg->name, sizeof("client-timeout-seconds")) == 0)
         {
             GONC_CAST(module->pointer,
                  struct tucube_tcp_epoll_module*)->client_timeout.it_value.tv_sec =
@@ -59,7 +59,7 @@ int tucube_module_init(struct tucube_module_args* module_args, struct tucube_mod
                       struct tucube_tcp_epoll_module*)->client_timeout.it_interval.tv_sec =
                            strtol(module_arg->value, NULL, 10);
         }
-        else if(strncmp("client-timeout-nano-seconds", module_arg->name, sizeof("client-timeout-nano-seconds") - 1) == 0)
+        else if(strncmp("client-timeout-nano-seconds", module_arg->name, sizeof("client-timeout-nano-seconds")) == 0)
         {
             GONC_CAST(module->pointer,
                  struct tucube_tcp_epoll_module*)->client_timeout.it_value.tv_nsec =
@@ -102,11 +102,11 @@ int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args
     int worker_max_clients;
     GONC_LIST_FOR_EACH(module_args, struct tucube_module_arg, module_arg)
     {
-        if(strncmp("tucube-worker-count", module_arg->name, sizeof("tucube-worker-count") - 1) == 0)
+        if(strncmp("tucube-worker-count", module_arg->name, sizeof("tucube-worker-count")) == 0)
         {
             worker_count = strtol(module_arg->value, NULL, 10);
         }
-        else if(strncmp("worker-max-clients", module_arg->name, sizeof("worker-max-clients") - 1) == 0)
+        else if(strncmp("worker-max-clients", module_arg->name, sizeof("worker-max-clients")) == 0)
         {
             worker_max_clients = strtol(module_arg->value, NULL, 10);
         }
