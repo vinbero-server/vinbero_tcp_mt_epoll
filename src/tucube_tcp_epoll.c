@@ -103,13 +103,9 @@ int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args
     GONC_LIST_FOR_EACH(module_args, struct tucube_module_arg, module_arg)
     {
         if(strncmp("tucube-worker-count", module_arg->name, sizeof("tucube-worker-count")) == 0)
-        {
             worker_count = strtol(module_arg->value, NULL, 10);
-        }
         else if(strncmp("worker-max-clients", module_arg->name, sizeof("worker-max-clients")) == 0)
-        {
             worker_max_clients = strtol(module_arg->value, NULL, 10);
-        }
     }
 
     if(worker_count == 0)
