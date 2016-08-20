@@ -270,7 +270,6 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
 
 int tucube_module_tldestroy(struct tucube_module* module)
 {
-warnx("tldestroy");
     GONC_CAST(module->pointer, struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_tldestroy(GONC_LIST_ELEMENT_NEXT(module));
     struct tucube_tcp_epoll_tlmodule* tlmodule = pthread_getspecific(*module->tlmodule_key);
     if(tlmodule != NULL)
@@ -291,7 +290,6 @@ warnx("tldestroy");
 
 int tucube_module_destroy(struct tucube_module* module)
 {
-warnx("destroy");
     GONC_CAST(module->pointer, struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_destroy(GONC_LIST_ELEMENT_NEXT(module));
 //    dlclose(module->dl_handle);
     pthread_key_delete(*module->tlmodule_key);
