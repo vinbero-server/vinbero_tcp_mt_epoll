@@ -218,13 +218,16 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                     if(timerfd_settime(tlmodule->client_timerfd_array[tlmodule->epoll_event_array[index].data.fd],
                          0, &GONC_CAST(module->pointer, struct tucube_tcp_epoll_module*)->client_timeout, NULL) == -1)
                         warn("%s: %u", __FILE__, __LINE__);
-
-                    if(GONC_CAST(module->pointer,
+                    int result;
+                    if((result = GONC_CAST(module->pointer,
                          struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_service(GONC_LIST_ELEMENT_NEXT(module),
-                              GONC_LIST_HEAD(tlmodule->cldata_list_array[tlmodule->epoll_event_array[index].data.fd])) == -1)
+                              GONC_LIST_HEAD(tlmodule->cldata_list_array[tlmodule->epoll_event_array[index].data.fd]))) == 1)
                     {
-                        warnx("%s: %u: tucube_tcp_epoll_module_service() failed", __FILE__, __LINE__);
+                        continue;
                     }
+                    else if(result == -1)
+                        warnx("%s: %u: tucube_tcp_epoll_module_service() failed", __FILE__, __LINE__);
+
                     GONC_CAST(module->pointer,
                          struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_cldestroy(GONC_LIST_ELEMENT_NEXT(module),
                               GONC_LIST_HEAD(tlmodule->cldata_list_array[tlmodule->epoll_event_array[index].data.fd]));
