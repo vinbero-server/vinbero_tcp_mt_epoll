@@ -75,7 +75,7 @@ int tucube_module_init(struct tucube_module_args* module_args, struct tucube_mod
         GONC_CAST(module->pointer,
              struct tucube_tcp_epoll_module*)->client_timeout.it_value.tv_sec =
                   GONC_CAST(module->pointer,
-                       struct tucube_tcp_epoll_module*)->client_timeout.it_interval.tv_sec = 10;
+                       struct tucube_tcp_epoll_module*)->client_timeout.it_interval.tv_sec = 3;
     }
 
     if(GONC_CAST(module->pointer,
