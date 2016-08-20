@@ -273,15 +273,18 @@ int tucube_module_tldestroy(struct tucube_module* module)
 warnx("tldestroy");
     GONC_CAST(module->pointer, struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_tldestroy(GONC_LIST_ELEMENT_NEXT(module));
     struct tucube_tcp_epoll_tlmodule* tlmodule = pthread_getspecific(*module->tlmodule_key);
-    free(tlmodule->epoll_event_array);
-    free(tlmodule->client_socket_array);
-    free(tlmodule->client_timerfd_array);
-    for(size_t index = 0; index != tlmodule->client_array_size; ++index)
+    if(tlmodule != NULL)
     {
-        free(tlmodule->cldata_list_array[index]);
+        free(tlmodule->epoll_event_array);
+        free(tlmodule->client_socket_array);
+        free(tlmodule->client_timerfd_array);
+        for(size_t index = 0; index != tlmodule->client_array_size; ++index)
+        {
+            free(tlmodule->cldata_list_array[index]);
+        }
+        free(tlmodule->cldata_list_array);
+        free(tlmodule);
     }
-    free(tlmodule->cldata_list_array);
-    free(tlmodule);
 
     return 0;
 }
