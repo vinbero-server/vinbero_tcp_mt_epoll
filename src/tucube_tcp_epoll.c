@@ -99,7 +99,7 @@ int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args
 {
     struct tucube_tcp_epoll_tlmodule* tlmodule = malloc(1 * sizeof(struct tucube_tcp_epoll_tlmodule));
     int worker_count = 0;
-    int worker_max_clients;
+    int worker_max_clients = 0;
     GONC_LIST_FOR_EACH(module_args, struct tucube_module_arg, module_arg)
     {
         if(strncmp("tucube-worker-count", module_arg->name, sizeof("tucube-worker-count")) == 0)
@@ -280,7 +280,7 @@ int tucube_module_tldestroy(struct tucube_module* module)
 int tucube_module_destroy(struct tucube_module* module)
 {
     GONC_CAST(module->pointer, struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_destroy(GONC_LIST_ELEMENT_NEXT(module));
-    dlclose(module->dl_handle);
+//    dlclose(module->dl_handle);
     pthread_key_delete(*module->tlmodule_key);
     free(module->tlmodule_key);
     free(module->pointer);
