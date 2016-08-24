@@ -250,11 +250,14 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                     uint64_t client_timerfd_value;
                     read(tlmodule->epoll_event_array[index].data.fd, &client_timerfd_value, sizeof(uint64_t));
                     int client_socket = tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd];
-// sometimes tlmodule->cldata_list_array[tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd]] can be NULL and causes SEGFAULT
-                    GONC_CAST(module->pointer,
-                         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_cldestroy(GONC_LIST_ELEMENT_NEXT(module),
-                              GONC_LIST_HEAD(tlmodule->cldata_list_array[tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd]]));
-                    free(tlmodule->cldata_list_array[client_socket]);
+                    if(tlmodule->cldata_list_array[client_socket] != NULL) // sometimes tlmodule->cldata_list_array[tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd]] becomes NULL and causes SEGFAULT
+                    {
+                        GONC_CAST(module->pointer,
+                             struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_cldestroy(GONC_LIST_ELEMENT_NEXT(module),
+                                  GONC_LIST_HEAD(tlmodule->cldata_list_array[client_socket]));
+                        free(tlmodule->cldata_list_array[client_socket]);
+                    }
+
                     close(tlmodule->epoll_event_array[index].data.fd);
                     close(tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd]);
                     tlmodule->cldata_list_array[client_socket] = NULL;
@@ -264,8 +267,8 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
             }
             else
             {
-                warnx("%s: %u: Unexpected file descriptor: %d", __FILE__, __LINE__, tlmodule->epoll_event_array[index].data.fd);
-                pthread_exit(NULL);
+                warnx("%s: %u: Unexpected file descriptor: %d", __FILE__, __LINE__, tlmodule->epoll_event_array[index].data.fd); // sometimes(when requests are too many) happens
+                close(tlmodule->epoll_event_array[index].data.fd); // not sure
             }
         }
     }
@@ -282,9 +285,7 @@ int tucube_module_tldestroy(struct tucube_module* module)
         free(tlmodule->client_socket_array);
         free(tlmodule->client_timerfd_array);
         for(size_t index = 0; index != tlmodule->client_array_size; ++index)
-        {
             free(tlmodule->cldata_list_array[index]);
-        }
         free(tlmodule->cldata_list_array);
         free(tlmodule);
     }
