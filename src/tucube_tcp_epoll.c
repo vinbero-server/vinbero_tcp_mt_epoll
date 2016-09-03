@@ -244,7 +244,7 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
             else if(tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd] != -1 &&
                  tlmodule->client_timerfd_array[tlmodule->epoll_event_array[index].data.fd] == -1)
             {
-                warnx("%s: %u: Client timed out", __FILE__, __LINE__);
+                warnx("%s: %u: Client timeout", __FILE__, __LINE__);
                 if(tlmodule->epoll_event_array[index].events & EPOLLIN)
                 {
                     uint64_t client_timerfd_value;
