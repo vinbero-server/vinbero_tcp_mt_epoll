@@ -250,14 +250,10 @@ int tucube_module_start(struct tucube_module* module, int* server_socket, pthrea
                     uint64_t client_timerfd_value;
                     read(tlmodule->epoll_event_array[index].data.fd, &client_timerfd_value, sizeof(uint64_t));
                     int client_socket = tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd];
-                    if(tlmodule->cldata_list_array[client_socket] != NULL) // sometimes tlmodule->cldata_list_array[tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd]] becomes NULL and causes SEGFAULT
-                    {
-                        GONC_CAST(module->pointer,
-                             struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_cldestroy(GONC_LIST_ELEMENT_NEXT(module),
-                                  GONC_LIST_HEAD(tlmodule->cldata_list_array[client_socket]));
-                        free(tlmodule->cldata_list_array[client_socket]);
-                    }
-
+                    GONC_CAST(module->pointer,
+                         struct tucube_tcp_epoll_module*)->tucube_tcp_epoll_module_cldestroy(GONC_LIST_ELEMENT_NEXT(module),
+                              GONC_LIST_HEAD(tlmodule->cldata_list_array[client_socket]));
+                    free(tlmodule->cldata_list_array[client_socket]);
                     close(tlmodule->epoll_event_array[index].data.fd);
                     close(tlmodule->client_socket_array[tlmodule->epoll_event_array[index].data.fd]);
                     tlmodule->cldata_list_array[client_socket] = NULL;
