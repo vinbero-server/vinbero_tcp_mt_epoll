@@ -1,38 +1,36 @@
 #ifndef _TUCUBE_TCP_EPOLL_H
 #define _TUCUBE_TCP_EPOLL_H
 
-#include <tucube/tucube_module.h>
-#include <tucube/tucube_cldata.h>
+#include <tucube/tucube_Module.h>
+#include <tucube/tucube_ClData.h>
 #include <libgonc/gonc_list.h>
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
 
-struct tucube_tcp_epoll_module
-{
-    int (*tucube_tcp_epoll_module_init)(struct tucube_module_args*, struct tucube_module_list*);
-    int (*tucube_tcp_epoll_module_tlinit)(struct tucube_module*, struct tucube_module_args*);
-    int (*tucube_tcp_epoll_module_clinit)(struct tucube_module*, struct tucube_cldata_list*, int*);
-    int (*tucube_tcp_epoll_module_service)(struct tucube_module*, struct tucube_cldata*);
-    int (*tucube_tcp_epoll_module_cldestroy)(struct tucube_module*, struct tucube_cldata*);
-    int (*tucube_tcp_epoll_module_tldestroy)(struct tucube_module*);
-    int (*tucube_tcp_epoll_module_destroy)(struct tucube_module*);
-    struct itimerspec client_timeout;
+struct tucube_tcp_epoll_Module {
+    int (*tucube_tcp_epoll_Module_init)(struct tucube_Module_Args*, struct tucube_Module_List*);
+    int (*tucube_tcp_epoll_Module_tlInit)(struct tucube_Module*, struct tucube_Module_Args*);
+    int (*tucube_tcp_epoll_Module_clInit)(struct tucube_Module*, struct tucube_ClData_List*, int*);
+    int (*tucube_tcp_epoll_Module_service)(struct tucube_Module*, struct tucube_ClData*);
+    int (*tucube_tcp_epoll_Module_clDestroy)(struct tucube_Module*, struct tucube_ClData*);
+    int (*tucube_tcp_epoll_Module_tlDestroy)(struct tucube_Module*);
+    int (*tucube_tcp_epoll_Module_destroy)(struct tucube_Module*);
+    struct itimerspec clientTimeout;
 };
 
-struct tucube_tcp_epoll_tlmodule
-{
-    struct epoll_event* epoll_event_array;
-    int epoll_event_array_size;
-    int* client_socket_array;
-    int* client_timerfd_array;
-    struct tucube_cldata_list** cldata_list_array;
-    int client_array_size;
+struct tucube_tcp_epoll_TlModule {
+    struct epoll_event* epollEventArray;
+    int epollEventArraySize;
+    int* clientSocketArray;
+    int* clientTimerFdArray;
+    struct tucube_ClData_List** clDataListArray;
+    int clientArraySize;
 };
 
-int tucube_module_init(struct tucube_module_args* module_args, struct tucube_module_list* module_list);
-int tucube_module_tlinit(struct tucube_module* module, struct tucube_module_args* module_args);
-int tucube_module_start(struct tucube_module* module, int* server_socket, pthread_mutex_t* server_socket_mutex);
-int tucube_module_tldestroy(struct tucube_module* module);
-int tucube_module_destroy(struct tucube_module* module);
+int tucube_Module_init(struct tucube_Module_Args* moduleArgs, struct tucube_Module_List* moduleList);
+int tucube_Module_tlInit(struct tucube_Module* module, struct tucube_Module_Args* moduleArgs);
+int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread_mutex_t* serverSocketMutex);
+int tucube_Module_tlDestroy(struct tucube_Module* module);
+int tucube_Module_destroy(struct tucube_Module* module);
 
 #endif
