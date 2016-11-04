@@ -16,8 +16,8 @@
 #include <libgonc/gonc_list.h>
 #include "tucube_tcp_epoll.h"
 
-int tucube_Module_init(struct tucube_Module_Args* moduleArgs, struct tucube_Module_List* moduleList) {
-    if(GONC_LIST_ELEMENT_NEXT(moduleArgs) == NULL)
+int tucube_Module_init(struct tucube_Module_Config* moduleConfig, struct tucube_Module_List* moduleList) {
+    if(GONC_LIST_ELEMENT_NEXT(moduleConfig) == NULL)
         errx(EXIT_FAILURE, "%s: %u: tucube_tcp_epoll requires another module", __FILE__, __LINE__);
 
     struct tucube_Module* module = malloc(1 * sizeof(struct tucube_Module));
@@ -28,7 +28,7 @@ int tucube_Module_init(struct tucube_Module_Args* moduleArgs, struct tucube_Modu
     module->tlModuleKey = malloc(1 * sizeof(pthread_key_t));
     pthread_key_create(module->tlModuleKey, NULL);
 
-    TUCUBE_MODULE_DLOPEN(module, moduleArgs);
+    TUCUBE_MODULE_DLOPEN(module, moduleConfig);
 
     TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_Module, tucube_tcp_epoll_Module_init);
     TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_Module, tucube_tcp_epoll_Module_tlInit);
@@ -39,50 +39,33 @@ int tucube_Module_init(struct tucube_Module_Args* moduleArgs, struct tucube_Modu
     TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_Module, tucube_tcp_epoll_Module_destroy);
 
     GONC_CAST(module->pointer,
-         struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_sec =
-              GONC_CAST(module->pointer,
-                   struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_sec = -1;
+            struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_sec =
+        GONC_CAST(module->pointer,
+                struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_sec = 3;
+
+    if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutSeconds") != NULL) {
+        GONC_CAST(module->pointer,
+                struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_sec =
+            GONC_CAST(module->pointer,
+                    struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_sec =
+            json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutSeconds"));
+    }
 
     GONC_CAST(module->pointer,
-         struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_nsec =
-              GONC_CAST(module->pointer,
-                   struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_nsec = -1;
-
-    GONC_LIST_FOR_EACH(moduleArgs, struct tucube_Module_Arg, moduleArg) {
-        if(strncmp("client-timeout-seconds", moduleArg->name, sizeof("client-timeout-seconds")) == 0) {
-            GONC_CAST(module->pointer,
-                 struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_sec =
-                 GONC_CAST(module->pointer,
-                      struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_sec =
-                           strtol(moduleArg->value, NULL, 10);
-        }
-        else if(strncmp("client-timeout-nano-seconds", moduleArg->name, sizeof("client-timeout-nano-seconds")) == 0) {
-            GONC_CAST(module->pointer,
-                 struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_nsec =
-                 GONC_CAST(module->pointer,
-                      struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_nsec =
-                           strtol(moduleArg->value, NULL, 10);
-        }
-    }
-
-    if(GONC_CAST(module->pointer,
-         struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_sec < 0) {
+            struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_nsec = 
         GONC_CAST(module->pointer,
-             struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_sec =
-                  GONC_CAST(module->pointer,
-                       struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_sec = 3;
-    }
+                struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_nsec = 0;
 
-    if(GONC_CAST(module->pointer,
-         struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_nsec < 0) {
+    if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutNanoSeconds") != NULL) {
         GONC_CAST(module->pointer,
-             struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_nsec =
-                  GONC_CAST(module->pointer,
-                       struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_nsec = 0;
+                struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_nsec =
+            GONC_CAST(module->pointer,
+                    struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_nsec =
+            json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutNanoSeconds"));
     }
 
     if(GONC_CAST(module->pointer,
-         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_init(GONC_LIST_ELEMENT_NEXT(moduleArgs),
+         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_init(GONC_LIST_ELEMENT_NEXT(moduleConfig),
               moduleList) == -1) {
         errx(EXIT_FAILURE, "%s: %u: tucube_tcp_epoll_Module_init() failed", __FILE__, __LINE__);
     }
@@ -90,19 +73,19 @@ int tucube_Module_init(struct tucube_Module_Args* moduleArgs, struct tucube_Modu
     return 0;
 }
 
-int tucube_Module_tlInit(struct tucube_Module* module, struct tucube_Module_Args* moduleArgs) {
+int tucube_Module_tlInit(struct tucube_Module* module, struct tucube_Module_Config* moduleConfig) {
     struct tucube_tcp_epoll_TlModule* tlModule = malloc(1 * sizeof(struct tucube_tcp_epoll_TlModule));
-    int worker_count = 0;
+    int workerCount = 0;
     int workerMaxClients = 0;
-    GONC_LIST_FOR_EACH(moduleArgs, struct tucube_Module_Arg, moduleArg) {
-        if(strncmp("tucube-worker-count", moduleArg->name, sizeof("tucube-worker-count")) == 0)
-            worker_count = strtol(moduleArg->value, NULL, 10);
-        else if(strncmp("worker-max-clients", moduleArg->name, sizeof("worker-max-clients")) == 0)
-            workerMaxClients = strtol(moduleArg->value, NULL, 10);
-    }
 
-    if(worker_count == 0) {
-        warnx("%s: %u: Argument tucube-worker-count is required", __FILE__, __LINE__);
+    if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube.workerCount") != NULL)
+        workerCount = json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube.workerCount"));
+
+    if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.workerMaxClients") != NULL)
+        workerCount = json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.workerMaxClients"));
+
+    if(workerCount == 0) {
+        warnx("%s: %u: Argument tucube.workerCount is required", __FILE__, __LINE__);
         pthread_exit(NULL);
     }
 
@@ -112,7 +95,7 @@ int tucube_Module_tlInit(struct tucube_Module* module, struct tucube_Module_Args
     tlModule->epollEventArraySize = workerMaxClients * 2 + 1; // '* 2': socket, timerfd; '+ 1': serverSocket; 
     tlModule->epollEventArray = malloc(tlModule->epollEventArraySize * sizeof(struct epoll_event));
 
-    tlModule->clientArraySize = workerMaxClients * 2 * worker_count + 1 + 1 + 3; //'+ 1': server_socker; '+ 1': epoll_fd; '+ 3': stdin, stdout, stderr; multipliying worker_count because file descriptors are shared among threads;
+    tlModule->clientArraySize = workerMaxClients * 2 * workerCount + 1 + 1 + 3; //'+ 1': server_socker; '+ 1': epoll_fd; '+ 3': stdin, stdout, stderr; multipliying workerCount because file descriptors are shared among threads;
 
     tlModule->clientSocketArray = malloc(tlModule->clientArraySize * sizeof(int));
     memset(tlModule->clientSocketArray, -1, tlModule->clientArraySize * sizeof(int));
@@ -125,7 +108,7 @@ int tucube_Module_tlInit(struct tucube_Module* module, struct tucube_Module_Args
     pthread_setspecific(*module->tlModuleKey, tlModule);
 
     GONC_CAST(module->pointer,
-         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_tlInit(GONC_LIST_ELEMENT_NEXT(module), GONC_LIST_ELEMENT_NEXT(moduleArgs));
+         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_tlInit(GONC_LIST_ELEMENT_NEXT(module), GONC_LIST_ELEMENT_NEXT(moduleConfig));
 
     return 0;
 }
