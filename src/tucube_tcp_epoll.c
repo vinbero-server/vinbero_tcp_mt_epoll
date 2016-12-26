@@ -132,7 +132,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
             pthread_exit(NULL);
         }
         for(int index = 0; index < epollEventCount; ++index) {
-            if(tlModule->epollEventArray[index].data.fd == *serverSocket) {
+            if(tlModule->epollEventArray[index].data.fd == *serverSocket) { // serverSocket
                 int clientSocket;
                 int mutexTryLockResult;
                 if((mutexTryLockResult = pthread_mutex_trylock(serverSocketMutex)) != 0) {
@@ -184,7 +184,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                           tlModule->clDataListArray[clientSocket], &tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]]);
             }
             else if(tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] != -1 &&
-                 tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd] == -1) {
+                 tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd] == -1) { // clientSocket
                 if(tlModule->epollEventArray[index].events & EPOLLIN) {
                     if(timerfd_settime(tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd],
                          0, &GONC_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->clientTimeout, NULL) == -1)
@@ -212,7 +212,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                 }
             }
             else if(tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd] != -1 &&
-                    tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] == -1) {
+                    tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] == -1) { // clientTimerFd
                 //warnx("%s: %u: Client timeout", __FILE__, __LINE__);
                 if(tlModule->epollEventArray[index].events & EPOLLIN) {
                     uint64_t clientTimerFdValue;
