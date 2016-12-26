@@ -115,7 +115,10 @@ int tucube_Module_tlInit(struct tucube_Module* module, struct tucube_Module_Conf
 
 int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread_mutex_t* serverSocketMutex) {
     struct tucube_tcp_epoll_TlModule* tlModule = pthread_getspecific(*module->tlModuleKey);    
-    fcntl(*serverSocket, F_SETFL, fcntl(*serverSocket, F_GETFL, 0) | O_NONBLOCK);
+    if(fcntl(*serverSocket, F_SETFL, fcntl(*serverSocket, F_GETFL, 0) | O_NONBLOCK) == -1) {
+        warn("%s: %u", __FILE__, __LINE__);
+        pthread_exit(NULL);
+    }
     int epoll_fd = epoll_create1(0);
     struct epoll_event epollEvent;
     memset(&epollEvent, 0, 1 * sizeof(struct epoll_event)); // to avoid valgrind warning: syscall param epoll_ctl(event) points to uninitialised byte(s)
@@ -154,7 +157,9 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                 tlModule->clDataListArray[clientSocket] = malloc(1 * sizeof(struct tucube_ClData_List));
                 GONC_LIST_INIT(tlModule->clDataListArray[clientSocket]);
 
-                fcntl(clientSocket, F_SETFL, fcntl(clientSocket, F_GETFL, 0) | O_NONBLOCK);
+                if(fcntl(clientSocket, F_SETFL, fcntl(clientSocket, F_GETFL, 0) | O_NONBLOCK) == -1)
+                    warn("%s: %u:", __FILE__, __LINE__);
+
                 epollEvent.events = EPOLLIN | EPOLLET;
                 epollEvent.data.fd = clientSocket;
                 if(epoll_ctl(epoll_fd, EPOLL_CTL_ADD, clientSocket, &epollEvent) == -1)
@@ -165,7 +170,8 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
 
                 tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]] = clientSocket;
 
-                fcntl(tlModule->clientTimerFdArray[clientSocket], F_SETFL, fcntl(tlModule->clientTimerFdArray[clientSocket], F_GETFL, 0) | O_NONBLOCK);
+                if(fcntl(tlModule->clientTimerFdArray[clientSocket], F_SETFL, fcntl(tlModule->clientTimerFdArray[clientSocket], F_GETFL, 0) | O_NONBLOCK) == -1)
+                    warn("%s: %u", __FILE__, __LINE__);
                 epollEvent.events = EPOLLIN | EPOLLET;
                 epollEvent.data.fd = tlModule->clientTimerFdArray[clientSocket];
                 if(timerfd_settime(tlModule->clientTimerFdArray[clientSocket], 0, &GONC_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->clientTimeout, NULL) == -1)
