@@ -202,9 +202,19 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                 tlModule->clDataListArray[clientSocket] = malloc(1 * sizeof(struct tucube_ClData_List));
                 GONC_LIST_INIT(tlModule->clDataListArray[clientSocket]);
 
-                GONC_CAST(module->pointer,
+                if(GONC_CAST(module->pointer,
                      struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clInit(GONC_LIST_ELEMENT_NEXT(module),
-                          tlModule->clDataListArray[clientSocket], &tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]]);
+                          tlModule->clDataListArray[clientSocket], &tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]]) == -1)
+                {
+                    warnx("%s: %u: clInit() failed", __FILE__, __LINE__);
+                    free(tlModule->clDataListArray[clientSocket]);
+                    close(clientSocket);
+                    close(tlModule->clientTimerFdArray[clientSocket]);
+                    tlModule->clDataListArray[clientSocket] = NULL;
+                    tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]] = -1;
+                    tlModule->clientTimerFdArray[clientSocket] = -1;
+                    continue;
+                }
             }
             else if(tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] != -1 &&
                  tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd] == -1) { // clientSocket
