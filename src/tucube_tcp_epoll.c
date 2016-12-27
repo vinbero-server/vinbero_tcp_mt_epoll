@@ -145,7 +145,6 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                     close(clientSocket);
                     continue;
                 }
-//warnx("new clientSocket %d", clientSocket);
 
                 if(fcntl(clientSocket, F_SETFL, fcntl(clientSocket, F_GETFL, 0) | O_NONBLOCK) == -1)
                 {
@@ -169,7 +168,6 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                     close(clientSocket);
                     continue;
                 }
-//warnx("new clientTimerFd %d", tlModule->clientTimerFdArray[clientSocket]);
 
                 if(fcntl(tlModule->clientTimerFdArray[clientSocket], F_SETFL, fcntl(tlModule->clientTimerFdArray[clientSocket], F_GETFL, 0) | O_NONBLOCK) == -1)
                 {
@@ -210,7 +208,6 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
             }
             else if(tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] != -1 &&
                  tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd] == -1) { // clientSocket
-//warnx("clientSocket %d", tlModule->epollEventArray[index].data.fd);
                 if(tlModule->epollEventArray[index].events & EPOLLIN) {
                     if(timerfd_settime(tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd],
                          0, &GONC_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->clientTimeout, NULL) == -1)
@@ -230,18 +227,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
 
                     free(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]);
 
-/*
-                    epollEvent.events = EPOLLIN | EPOLLET;
-                    epollEvent.data.fd = tlModule->epollEventArray[index].data.fd;
-                    epoll_ctl(epollFd, EPOLL_CTL_DEL, tlModule->epollEventArray[index].data.fd, &epollEvent);
-*/
                     close(tlModule->clientSocketArray[tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]]); // to prevent double close
- 
-/*
-                    epollEvent.events = EPOLLIN | EPOLLET;
-                    epollEvent.data.fd = tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd];
-                    epoll_ctl(epollFd, EPOLL_CTL_DEL, tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd], &epollEvent);
-*/
                     close(tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]);
 
                     tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd] = NULL;
@@ -251,7 +237,6 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
             }
             else if(tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd] != -1 &&
                     tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] == -1) { // clientTimerFd
-//warnx("%s: %u: clientTimerFd %d", __FILE__, __LINE__, tlModule->epollEventArray[index].data.fd);
                 if(tlModule->epollEventArray[index].events & EPOLLIN) {
                     uint64_t clientTimerFdValue;
                     read(tlModule->epollEventArray[index].data.fd, &clientTimerFdValue, sizeof(uint64_t));
@@ -262,18 +247,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
 
                     free(tlModule->clDataListArray[clientSocket]);
 
-/*
-                    epollEvent.events = EPOLLIN | EPOLLET;
-                    epollEvent.data.fd = tlModule->epollEventArray[index].data.fd;
-                    epoll_ctl(epollFd, EPOLL_CTL_DEL, tlModule->epollEventArray[index].data.fd, &epollEvent);
-*/
                     close(tlModule->epollEventArray[index].data.fd);
-
-/*
-                    epollEvent.events = EPOLLIN | EPOLLET;
-                    epollEvent.data.fd = tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd];
-                    epoll_ctl(epollFd, EPOLL_CTL_DEL, tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd], &epollEvent);
-*/
                     close(tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd]);
 
                     tlModule->clDataListArray[clientSocket] = NULL;
@@ -282,9 +256,8 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                 }
             }
             else {
-                warnx("%s: %u: Unexpected file descriptor %d", __FILE__, __LINE__, tlModule->epollEventArray[index].data.fd); // sometimes(when requests are too many) happens
+                warnx("%s: %u: Unexpected file descriptor %d", __FILE__, __LINE__, tlModule->epollEventArray[index].data.fd); // This shouldn't happen at all
                 pthread_exit(NULL);
-//                close(tlModule->epollEventArray[index].data.fd); // not sure
             }
         }
     }
