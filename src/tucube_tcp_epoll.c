@@ -153,7 +153,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                     continue;
                 }
 
-                epollEvent.events = EPOLLIN | EPOLLET;
+                epollEvent.events = EPOLLET | EPOLLIN | EPOLLRDHUP | EPOLLHUP;
                 epollEvent.data.fd = clientSocket;
                 if(epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocket, &epollEvent) == -1)
                 {
@@ -243,9 +243,35 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                     tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd] = NULL;
                     tlModule->clientSocketArray[tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]] = -1;
                     tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] = -1;
+                } else if(tlModule->epollEventArray[index].events & EPOLLRDHUP) {
+                    GONC_CAST(module->pointer,
+                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clDestroy(GONC_LIST_ELEMENT_NEXT(module),
+                              GONC_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
+
+                    free(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]);
+
+                    close(tlModule->clientSocketArray[tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]]); // to prevent double close
+                    close(tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]);
+
+                    tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd] = NULL;
+                    tlModule->clientSocketArray[tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]] = -1;
+                    tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] = -1;
+                } else if(tlModule->epollEventArray[index].events & EPOLLHUP) {
+                    warnx("%s: %u: Error occured on a socket");
+                    GONC_CAST(module->pointer,
+                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clDestroy(GONC_LIST_ELEMENT_NEXT(module),
+                              GONC_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
+
+                    free(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]);
+
+                    close(tlModule->clientSocketArray[tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]]); // to prevent double close
+                    close(tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]);
+
+                    tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd] = NULL;
+                    tlModule->clientSocketArray[tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]] = -1;
+                    tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] = -1;
                 }
-            }
-            else if(tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd] != -1 &&
+            } else if(tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd] != -1 &&
                     tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] == -1) { // clientTimerFd
                 if(tlModule->epollEventArray[index].events & EPOLLIN) {
                     uint64_t clientTimerFdValue;
