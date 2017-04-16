@@ -95,7 +95,7 @@ int tucube_Module_tlInit(struct tucube_Module* module, struct tucube_Module_Conf
     tlModule->epollEventArraySize = workerMaxClients * 2 + 1; // '* 2': socket, timerfd; '+ 1': serverSocket; 
     tlModule->epollEventArray = malloc(tlModule->epollEventArraySize * sizeof(struct epoll_event));
 
-    tlModule->clientArraySize = workerMaxClients * 2 * workerCount + 1 + 1 + 3; //'+ 1': server_socker; '+ 1': epollFd; '+ 3': stdin, stdout, stderr; multipliying workerCount because file descriptors are shared among threads;
+    tlModule->clientArraySize = workerMaxClients * 2 * workerCount + 1 + 1 + 3; //'+ 1': serverSocket; '+ 1': epollFd; '+ 3': stdin, stdout, stderr; multipliying workerCount because file descriptors are shared among threads;
 
     tlModule->clientSocketArray = malloc(tlModule->clientArraySize * sizeof(int));
     memset(tlModule->clientSocketArray, -1, tlModule->clientArraySize * sizeof(int));
