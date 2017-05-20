@@ -257,7 +257,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                     tlModule->clientSocketArray[tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]] = -1;
                     tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] = -1;
                 } else if(tlModule->epollEventArray[index].events & EPOLLHUP) {
-                    warnx("%s: %u: Error occured on a socket");
+                    warnx("%s: %u: Error occured on a socket", __FILE__, __LINE__);
                     GONC_CAST(module->pointer,
                          struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clDestroy(GONC_LIST_ELEMENT_NEXT(module),
                               GONC_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
