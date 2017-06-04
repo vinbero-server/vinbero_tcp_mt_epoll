@@ -146,8 +146,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                     continue;
                 }
 
-                if(fcntl(clientSocket, F_SETFL, fcntl(clientSocket, F_GETFL, 0) | O_NONBLOCK) == -1)
-                {
+                if(fcntl(clientSocket, F_SETFL, fcntl(clientSocket, F_GETFL, 0) | O_NONBLOCK) == -1) {
                     warn("%s: %u:", __FILE__, __LINE__);
                     close(clientSocket);
                     continue;
@@ -155,22 +154,19 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
 
                 epollEvent.events = EPOLLET | EPOLLIN | EPOLLRDHUP | EPOLLHUP;
                 epollEvent.data.fd = clientSocket;
-                if(epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocket, &epollEvent) == -1)
-                {
+                if(epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocket, &epollEvent) == -1) {
                     warn("%s: %u", __FILE__, __LINE__);
                     close(clientSocket);
                     continue;
                 }
 
-                if((tlModule->clientTimerFdArray[clientSocket] = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) == -1)
-                {
+                if((tlModule->clientTimerFdArray[clientSocket] = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) == -1) {
                     warn("%s: %u", __FILE__, __LINE__);
                     close(clientSocket);
                     continue;
                 }
 
-                if(fcntl(tlModule->clientTimerFdArray[clientSocket], F_SETFL, fcntl(tlModule->clientTimerFdArray[clientSocket], F_GETFL, 0) | O_NONBLOCK) == -1)
-                {
+                if(fcntl(tlModule->clientTimerFdArray[clientSocket], F_SETFL, fcntl(tlModule->clientTimerFdArray[clientSocket], F_GETFL, 0) | O_NONBLOCK) == -1) {
                     warn("%s: %u", __FILE__, __LINE__);
                     close(clientSocket);
                     close(tlModule->clientTimerFdArray[clientSocket]);
@@ -178,8 +174,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                     continue;
                 }
 
-                if(timerfd_settime(tlModule->clientTimerFdArray[clientSocket], 0, &GONC_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->clientTimeout, NULL) == -1)
-                {
+                if(timerfd_settime(tlModule->clientTimerFdArray[clientSocket], 0, &GONC_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->clientTimeout, NULL) == -1) {
                     warn("%s: %u", __FILE__, __LINE__);
                     close(clientSocket);
                     close(tlModule->clientTimerFdArray[clientSocket]);
@@ -189,8 +184,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
 
                 epollEvent.events = EPOLLIN | EPOLLET;
                 epollEvent.data.fd = tlModule->clientTimerFdArray[clientSocket];
-                if(epoll_ctl(epollFd, EPOLL_CTL_ADD, tlModule->clientTimerFdArray[clientSocket], &epollEvent) == -1)
-                {
+                if(epoll_ctl(epollFd, EPOLL_CTL_ADD, tlModule->clientTimerFdArray[clientSocket], &epollEvent) == -1) {
                     warn("%s: %u", __FILE__, __LINE__);
                     close(clientSocket);
                     close(tlModule->clientTimerFdArray[clientSocket]);
@@ -204,8 +198,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
 
                 if(GONC_CAST(module->pointer,
                      struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clInit(GONC_LIST_ELEMENT_NEXT(module),
-                          tlModule->clDataListArray[clientSocket], &tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]]) == -1)
-                {
+                          tlModule->clDataListArray[clientSocket], &tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]]) == -1) {
                     warnx("%s: %u: clInit() failed", __FILE__, __LINE__);
                     free(tlModule->clDataListArray[clientSocket]);
                     close(clientSocket);
