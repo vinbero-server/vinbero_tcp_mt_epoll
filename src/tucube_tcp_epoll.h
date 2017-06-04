@@ -3,7 +3,7 @@
 
 #include <tucube/tucube_Module.h>
 #include <tucube/tucube_ClData.h>
-#include <libgonc/gonc_list.h>
+#include <libgon_c/gon_c_list.h>
 #include <sys/epoll.h>
 #include <sys/timerfd.h>
 

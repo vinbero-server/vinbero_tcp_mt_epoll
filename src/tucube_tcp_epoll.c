@@ -12,17 +12,17 @@
 #include <unistd.h>
 #include <tucube/tucube_Module.h>
 #include <tucube/tucube_ClData.h>
-#include <libgonc/gonc_cast.h>
-#include <libgonc/gonc_list.h>
+#include <libgon_c/gon_c_cast.h>
+#include <libgon_c/gon_c_list.h>
 #include "tucube_tcp_epoll.h"
 
 int tucube_Module_init(struct tucube_Module_Config* moduleConfig, struct tucube_Module_List* moduleList) {
-    if(GONC_LIST_ELEMENT_NEXT(moduleConfig) == NULL)
+    if(GON_C_LIST_ELEMENT_NEXT(moduleConfig) == NULL)
         errx(EXIT_FAILURE, "%s: %u: tucube_tcp_epoll requires another module", __FILE__, __LINE__);
 
     struct tucube_Module* module = malloc(1 * sizeof(struct tucube_Module));
-    GONC_LIST_ELEMENT_INIT(module);
-    GONC_LIST_APPEND(moduleList, module);
+    GON_C_LIST_ELEMENT_INIT(module);
+    GON_C_LIST_APPEND(moduleList, module);
 
     module->pointer = malloc(1 * sizeof(struct tucube_tcp_epoll_Module));
     module->tlModuleKey = malloc(1 * sizeof(pthread_key_t));
@@ -38,34 +38,34 @@ int tucube_Module_init(struct tucube_Module_Config* moduleConfig, struct tucube_
     TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_Module, tucube_tcp_epoll_Module_tlDestroy);
     TUCUBE_MODULE_DLSYM(module, struct tucube_tcp_epoll_Module, tucube_tcp_epoll_Module_destroy);
 
-    GONC_CAST(module->pointer,
+    GON_C_CAST(module->pointer,
             struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_sec =
-        GONC_CAST(module->pointer,
+        GON_C_CAST(module->pointer,
                 struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_sec = 3;
 
     if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutSeconds") != NULL) {
-        GONC_CAST(module->pointer,
+        GON_C_CAST(module->pointer,
                 struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_sec =
-            GONC_CAST(module->pointer,
+            GON_C_CAST(module->pointer,
                     struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_sec =
             json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutSeconds"));
     }
 
-    GONC_CAST(module->pointer,
+    GON_C_CAST(module->pointer,
             struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_nsec = 
-        GONC_CAST(module->pointer,
+        GON_C_CAST(module->pointer,
                 struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_nsec = 0;
 
     if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutNanoSeconds") != NULL) {
-        GONC_CAST(module->pointer,
+        GON_C_CAST(module->pointer,
                 struct tucube_tcp_epoll_Module*)->clientTimeout.it_value.tv_nsec =
-            GONC_CAST(module->pointer,
+            GON_C_CAST(module->pointer,
                     struct tucube_tcp_epoll_Module*)->clientTimeout.it_interval.tv_nsec =
             json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutNanoSeconds"));
     }
 
-    if(GONC_CAST(module->pointer,
-         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_init(GONC_LIST_ELEMENT_NEXT(moduleConfig),
+    if(GON_C_CAST(module->pointer,
+         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_init(GON_C_LIST_ELEMENT_NEXT(moduleConfig),
               moduleList) == -1) {
         errx(EXIT_FAILURE, "%s: %u: tucube_tcp_epoll_Module_init() failed", __FILE__, __LINE__);
     }
@@ -107,8 +107,8 @@ int tucube_Module_tlInit(struct tucube_Module* module, struct tucube_Module_Conf
 
     pthread_setspecific(*module->tlModuleKey, tlModule);
 
-    GONC_CAST(module->pointer,
-         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_tlInit(GONC_LIST_ELEMENT_NEXT(module), GONC_LIST_ELEMENT_NEXT(moduleConfig));
+    GON_C_CAST(module->pointer,
+         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_tlInit(GON_C_LIST_ELEMENT_NEXT(module), GON_C_LIST_ELEMENT_NEXT(moduleConfig));
 
     return 0;
 }
@@ -174,7 +174,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                     continue;
                 }
 
-                if(timerfd_settime(tlModule->clientTimerFdArray[clientSocket], 0, &GONC_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->clientTimeout, NULL) == -1) {
+                if(timerfd_settime(tlModule->clientTimerFdArray[clientSocket], 0, &GON_C_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->clientTimeout, NULL) == -1) {
                     warn("%s: %u", __FILE__, __LINE__);
                     close(clientSocket);
                     close(tlModule->clientTimerFdArray[clientSocket]);
@@ -194,10 +194,10 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
 
                 tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]] = clientSocket;
                 tlModule->clDataListArray[clientSocket] = malloc(1 * sizeof(struct tucube_ClData_List));
-                GONC_LIST_INIT(tlModule->clDataListArray[clientSocket]);
+                GON_C_LIST_INIT(tlModule->clDataListArray[clientSocket]);
 
-                if(GONC_CAST(module->pointer,
-                     struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clInit(GONC_LIST_ELEMENT_NEXT(module),
+                if(GON_C_CAST(module->pointer,
+                     struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clInit(GON_C_LIST_ELEMENT_NEXT(module),
                           tlModule->clDataListArray[clientSocket], &tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]]) == -1) {
                     warnx("%s: %u: clInit() failed", __FILE__, __LINE__);
                     free(tlModule->clDataListArray[clientSocket]);
@@ -213,20 +213,20 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                  tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd] == -1) { // clientSocket
                 if(tlModule->epollEventArray[index].events & EPOLLIN) {
                     if(timerfd_settime(tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd],
-                         0, &GONC_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->clientTimeout, NULL) == -1)
+                         0, &GON_C_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->clientTimeout, NULL) == -1)
                         warn("%s: %u", __FILE__, __LINE__);
                     int result;
-                    if((result = GONC_CAST(module->pointer,
-                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_service(GONC_LIST_ELEMENT_NEXT(module),
-                              GONC_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]))) == 1) {
+                    if((result = GON_C_CAST(module->pointer,
+                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_service(GON_C_LIST_ELEMENT_NEXT(module),
+                              GON_C_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]))) == 1) {
                         continue;
                     }
                     else if(result == -1)
                         warnx("%s: %u: tucube_tcp_epoll_Module_service() failed", __FILE__, __LINE__);
 
-                    GONC_CAST(module->pointer,
-                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clDestroy(GONC_LIST_ELEMENT_NEXT(module),
-                              GONC_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
+                    GON_C_CAST(module->pointer,
+                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clDestroy(GON_C_LIST_ELEMENT_NEXT(module),
+                              GON_C_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
 
                     free(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]);
 
@@ -237,9 +237,9 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                     tlModule->clientSocketArray[tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]] = -1;
                     tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] = -1;
                 } else if(tlModule->epollEventArray[index].events & EPOLLRDHUP) {
-                    GONC_CAST(module->pointer,
-                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clDestroy(GONC_LIST_ELEMENT_NEXT(module),
-                              GONC_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
+                    GON_C_CAST(module->pointer,
+                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clDestroy(GON_C_LIST_ELEMENT_NEXT(module),
+                              GON_C_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
 
                     free(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]);
 
@@ -251,9 +251,9 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                     tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] = -1;
                 } else if(tlModule->epollEventArray[index].events & EPOLLHUP) {
                     warnx("%s: %u: Error occured on a socket", __FILE__, __LINE__);
-                    GONC_CAST(module->pointer,
-                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clDestroy(GONC_LIST_ELEMENT_NEXT(module),
-                              GONC_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
+                    GON_C_CAST(module->pointer,
+                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clDestroy(GON_C_LIST_ELEMENT_NEXT(module),
+                              GON_C_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
 
                     free(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]);
 
@@ -270,9 +270,9 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
                     uint64_t clientTimerFdValue;
                     read(tlModule->epollEventArray[index].data.fd, &clientTimerFdValue, sizeof(uint64_t));
                     int clientSocket = tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd];
-                    GONC_CAST(module->pointer,
-                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clDestroy(GONC_LIST_ELEMENT_NEXT(module),
-                              GONC_LIST_HEAD(tlModule->clDataListArray[clientSocket]));
+                    GON_C_CAST(module->pointer,
+                         struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_clDestroy(GON_C_LIST_ELEMENT_NEXT(module),
+                              GON_C_LIST_HEAD(tlModule->clDataListArray[clientSocket]));
 
                     free(tlModule->clDataListArray[clientSocket]);
 
@@ -294,7 +294,7 @@ int tucube_Module_start(struct tucube_Module* module, int* serverSocket, pthread
 }
 
 int tucube_Module_tlDestroy(struct tucube_Module* module) {
-    GONC_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_tlDestroy(GONC_LIST_ELEMENT_NEXT(module));
+    GON_C_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_tlDestroy(GON_C_LIST_ELEMENT_NEXT(module));
     struct tucube_tcp_epoll_TlModule* tlModule = pthread_getspecific(*module->tlModuleKey);
     if(tlModule != NULL) {
         free(tlModule->epollEventArray);
@@ -310,7 +310,7 @@ int tucube_Module_tlDestroy(struct tucube_Module* module) {
 }
 
 int tucube_Module_destroy(struct tucube_Module* module) {
-    GONC_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_destroy(GONC_LIST_ELEMENT_NEXT(module));
+    GON_C_CAST(module->pointer, struct tucube_tcp_epoll_Module*)->tucube_tcp_epoll_Module_destroy(GON_C_LIST_ELEMENT_NEXT(module));
 //    dlclose(module->dl_handle);
     pthread_key_delete(*module->tlModuleKey);
     free(module->tlModuleKey);
