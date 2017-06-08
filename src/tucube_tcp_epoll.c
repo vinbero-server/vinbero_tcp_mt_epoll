@@ -13,14 +13,16 @@
 #include <tucube/tucube_Module.h>
 #include <tucube/tucube_ClData.h>
 #include <tucube/tucube_IBase.h>
-#include <tucube/tucube_IThreadLocal.h>
-#include <tucube/tucube_IClientLocal.h>
+#include <tucube/tucube_ITlService.h>
+#include <tucube/tucube_ICLocal.h>
+#include <tucube/tucube_IClService.h>
 #include <libgon_c/gon_c_cast.h>
 #include <libgon_c/gon_c_list.h>
 
 struct tucube_tcp_epoll_Module {
     TUCUBE_IBASE_FUNCTION_POINTERS;
-    TUCUBE_ICLIENT_LOCAL_FUNCTION_POINTERS;
+    TUCUBE_ICLOCAL_FUNCTION_POINTERS;
+    TUCUBE_ICLSERVICE_FUNCTION_POINTERS;
     struct itimerspec clientTimeout;
 };
 
@@ -34,7 +36,7 @@ struct tucube_tcp_epoll_TlModule {
 };
 
 TUCUBE_IBASE_FUNCTIONS;
-TUCUBE_ITHREAD_LOCAL_FUNCTIONS;
+TUCUBE_ITLSERVICE_FUNCTIONS;
 
 int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_Module_List* moduleList, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GON_C_CAST(module->pointer, struct tucube_tcp_epoll_Module*)
@@ -51,7 +53,7 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
 
     TUCUBE_MODULE_DLOPEN(module, moduleConfig);
     TUCUBE_IBASE_DLSYM(module, struct tucube_tcp_epoll_Module);
-    TUCUBE_ICLIENT_LOCAL_DLSYM(module, struct tucube_tcp_epoll_Module);
+    TUCUBE_ICLOCAL_DLSYM(module, struct tucube_tcp_epoll_Module);
 
     TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_sec =
         TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_sec = 3;
@@ -121,7 +123,7 @@ int tucube_IBase_tlInit(struct tucube_Module* module, struct tucube_Module_Confi
 #undef TUCUBE_LOCAL_MODULE
 }
 
-int tucube_IThreadLocal_service(struct tucube_Module* module, void* args[]) {
+int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GON_C_CAST(module->pointer, struct tucube_tcp_epoll_Module*)
 #define TUCUBE_LOCAL_SERVER_SOCKET ((int*)args[0])
     struct tucube_tcp_epoll_TlModule* tlModule = pthread_getspecific(*module->tlModuleKey);    
@@ -206,7 +208,7 @@ int tucube_IThreadLocal_service(struct tucube_Module* module, void* args[]) {
                 tlModule->clDataListArray[clientSocket] = malloc(1 * sizeof(struct tucube_ClData_List));
                 GON_C_LIST_INIT(tlModule->clDataListArray[clientSocket]);
 
-                if(TUCUBE_LOCAL_MODULE->tucube_IClientLocal_init(GON_C_LIST_ELEMENT_NEXT(module),
+                if(TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(GON_C_LIST_ELEMENT_NEXT(module),
                           tlModule->clDataListArray[clientSocket], (void*[]){&tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]]}) == -1) {
                     warnx("%s: %u: clInit() failed", __FILE__, __LINE__);
                     free(tlModule->clDataListArray[clientSocket]);
@@ -225,14 +227,14 @@ int tucube_IThreadLocal_service(struct tucube_Module* module, void* args[]) {
                          0, &TUCUBE_LOCAL_MODULE->clientTimeout, NULL) == -1)
                         warn("%s: %u", __FILE__, __LINE__);
                     int result;
-                    if((result = TUCUBE_LOCAL_MODULE->tucube_IClientLocal_service(GON_C_LIST_ELEMENT_NEXT(module),
+                    if((result = TUCUBE_LOCAL_MODULE->tucube_IClService_call(GON_C_LIST_ELEMENT_NEXT(module),
                               GON_C_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]), NULL)) == 1) {
                         continue;
                     }
                     else if(result == -1)
-                        warnx("%s: %u: tucube_IClientLocal_service() failed", __FILE__, __LINE__);
+                        warnx("%s: %u: tucube_IClService_call() failed", __FILE__, __LINE__);
 
-                    TUCUBE_LOCAL_MODULE->tucube_IClientLocal_destroy(GON_C_LIST_ELEMENT_NEXT(module),
+                    TUCUBE_LOCAL_MODULE->tucube_ICLocal_destroy(GON_C_LIST_ELEMENT_NEXT(module),
                               GON_C_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
 
                     free(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]);
@@ -244,7 +246,7 @@ int tucube_IThreadLocal_service(struct tucube_Module* module, void* args[]) {
                     tlModule->clientSocketArray[tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd]] = -1;
                     tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] = -1;
                 } else if(tlModule->epollEventArray[index].events & EPOLLRDHUP) {
-                    TUCUBE_LOCAL_MODULE->tucube_IClientLocal_destroy(GON_C_LIST_ELEMENT_NEXT(module),
+                    TUCUBE_LOCAL_MODULE->tucube_ICLocal_destroy(GON_C_LIST_ELEMENT_NEXT(module),
                               GON_C_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
 
                     free(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]);
@@ -257,7 +259,7 @@ int tucube_IThreadLocal_service(struct tucube_Module* module, void* args[]) {
                     tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd] = -1;
                 } else if(tlModule->epollEventArray[index].events & EPOLLHUP) {
                     warnx("%s: %u: Error occured on a socket", __FILE__, __LINE__);
-                    TUCUBE_LOCAL_MODULE->tucube_IClientLocal_destroy(GON_C_LIST_ELEMENT_NEXT(module),
+                    TUCUBE_LOCAL_MODULE->tucube_ICLocal_destroy(GON_C_LIST_ELEMENT_NEXT(module),
                               GON_C_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
 
                     free(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]);
@@ -275,7 +277,7 @@ int tucube_IThreadLocal_service(struct tucube_Module* module, void* args[]) {
                     uint64_t clientTimerFdValue;
                     read(tlModule->epollEventArray[index].data.fd, &clientTimerFdValue, sizeof(uint64_t));
                     int clientSocket = tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd];
-                    TUCUBE_LOCAL_MODULE->tucube_IClientLocal_destroy(GON_C_LIST_ELEMENT_NEXT(module),
+                    TUCUBE_LOCAL_MODULE->tucube_ICLocal_destroy(GON_C_LIST_ELEMENT_NEXT(module),
                               GON_C_LIST_HEAD(tlModule->clDataListArray[clientSocket]));
 
                     free(tlModule->clDataListArray[clientSocket]);
