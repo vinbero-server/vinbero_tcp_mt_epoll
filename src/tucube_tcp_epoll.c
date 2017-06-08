@@ -54,6 +54,7 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
     TUCUBE_MODULE_DLOPEN(module, moduleConfig);
     TUCUBE_IBASE_DLSYM(module, struct tucube_tcp_epoll_Module);
     TUCUBE_ICLOCAL_DLSYM(module, struct tucube_tcp_epoll_Module);
+    TUCUBE_ICLSERVICE_DLSYM(module, struct tucube_tcp_epoll_Module);
 
     TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_sec =
         TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_sec = 3;
