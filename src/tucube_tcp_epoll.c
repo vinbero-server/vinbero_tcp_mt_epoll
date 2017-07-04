@@ -211,9 +211,9 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
                 GENC_LIST_INIT(tlModule->clDataListArray[clientSocket]);
 		struct gaio_Io clientIo = {
 		    .object.pointer = &tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]],
-		    .read = gaio_linux_read,
-		    .write = gaio_linux_write,
-		    .close = gaio_nop_close
+		    .read = gaio_FdPointer_read,
+		    .write = gaio_FdPointer_write,
+		    .close = gaio_FdPointer_close
                 };
 
                 if(TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(
