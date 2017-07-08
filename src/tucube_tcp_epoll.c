@@ -213,6 +213,8 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
 		    .object.pointer = &tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]],
 		    .read = gaio_FdPointer_read,
 		    .write = gaio_FdPointer_write,
+		    .sendfile = gaio_FdPointer_sendfile,
+		    .fcntl = gaio_FdPointer_fcntl,
 		    .close = gaio_FdPointer_close
                 };
 
