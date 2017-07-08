@@ -41,6 +41,7 @@ TUCUBE_ITLSERVICE_FUNCTIONS;
 
 int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_Module_List* moduleList, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_tcp_epoll_Module*)
+    warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     if(GENC_LIST_ELEMENT_NEXT(moduleConfig) == NULL)
         errx(EXIT_FAILURE, "%s: %u: tucube_tcp_epoll requires another module", __FILE__, __LINE__);
 
@@ -86,6 +87,7 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
 
 int tucube_IBase_tlInit(struct tucube_Module* module, struct tucube_Module_Config* moduleConfig, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_tcp_epoll_Module*)
+    warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     struct tucube_tcp_epoll_TlModule* tlModule = malloc(1 * sizeof(struct tucube_tcp_epoll_TlModule));
     int workerCount = 0;
     int workerMaxClients = 0;
@@ -128,6 +130,7 @@ int tucube_IBase_tlInit(struct tucube_Module* module, struct tucube_Module_Confi
 int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_tcp_epoll_Module*)
 #define TUCUBE_LOCAL_SERVER_SOCKET ((int*)args[0])
+    warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     struct tucube_tcp_epoll_TlModule* tlModule = pthread_getspecific(*module->tlModuleKey);    
     if(fcntl(*TUCUBE_LOCAL_SERVER_SOCKET, F_SETFL, fcntl(*TUCUBE_LOCAL_SERVER_SOCKET, F_GETFL, 0) | O_NONBLOCK) == -1) {
         warn("%s: %u", __FILE__, __LINE__);
@@ -223,7 +226,7 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
                     tlModule->clDataListArray[clientSocket],
 		    (void*[]){&clientIo, NULL}) == -1) {
 
-                    warnx("%s: %u: clInit() failed", __FILE__, __LINE__);
+                    warnx("%s: %u: tucube_ICLocal_init() failed", __FILE__, __LINE__);
                     free(tlModule->clDataListArray[clientSocket]);
                     close(clientSocket);
                     close(tlModule->clientTimerFdArray[clientSocket]);
@@ -247,8 +250,10 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
                     else if(result == -1)
                         warnx("%s: %u: tucube_IClService_call() failed", __FILE__, __LINE__);
 
-                    TUCUBE_LOCAL_MODULE->tucube_ICLocal_destroy(GENC_LIST_ELEMENT_NEXT(module),
-                              GENC_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]));
+                    if(TUCUBE_LOCAL_MODULE->tucube_ICLocal_destroy(GENC_LIST_ELEMENT_NEXT(module),
+                              GENC_LIST_HEAD(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd])) == -1) {
+                        warnx("%s: %u: tucube_ICLocal_destroy() failed", __FILE__, __LINE__);
+		    }
 
                     free(tlModule->clDataListArray[tlModule->epollEventArray[index].data.fd]);
 
@@ -316,6 +321,7 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
 
 int tucube_IBase_tlDestroy(struct tucube_Module* module) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_tcp_epoll_Module*)
+    warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     TUCUBE_LOCAL_MODULE->tucube_IBase_tlDestroy(GENC_LIST_ELEMENT_NEXT(module));
     struct tucube_tcp_epoll_TlModule* tlModule = pthread_getspecific(*module->tlModuleKey);
     if(tlModule != NULL) {
@@ -333,6 +339,7 @@ int tucube_IBase_tlDestroy(struct tucube_Module* module) {
 
 int tucube_IBase_destroy(struct tucube_Module* module) {
 #define TUCUBE_LOCAL_MODULE GENC_CAST(module->generic.pointer, struct tucube_tcp_epoll_Module*)
+    warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     TUCUBE_LOCAL_MODULE->tucube_IBase_destroy(GENC_LIST_ELEMENT_NEXT(module));
 //    dlclose(module->dl_handle);
     pthread_key_delete(*module->tlModuleKey);
