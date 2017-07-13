@@ -61,19 +61,23 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
     TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_sec =
         TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_sec = 3;
 
-    if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutSeconds") != NULL) {
+    if(json_object_get(json_array_get(moduleConfig->json, 1),
+    "tucube_tcp_epoll.clientTimeoutSeconds") != NULL) {
         TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_sec =
             TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_sec =
-            json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutSeconds"));
+            json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1),
+	    "tucube_tcp_epoll.clientTimeoutSeconds"));
     }
 
     TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_nsec = 
         TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_nsec = 0;
 
-    if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutNanoSeconds") != NULL) {
+    if(json_object_get(json_array_get(moduleConfig->json, 1),
+    "tucube_tcp_epoll.clientTimeoutNanoSeconds") != NULL) {
         TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_nsec =
             TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_nsec =
-            json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.clientTimeoutNanoSeconds"));
+            json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1),
+	    "tucube_tcp_epoll.clientTimeoutNanoSeconds"));
     }
 
     if(TUCUBE_LOCAL_MODULE->tucube_IBase_init(GENC_LIST_ELEMENT_NEXT(moduleConfig),
@@ -95,8 +99,10 @@ int tucube_IBase_tlInit(struct tucube_Module* module, struct tucube_Module_Confi
     if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube.workerCount") != NULL)
         workerCount = json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube.workerCount"));
 
-    if(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.workerMaxClients") != NULL)
-        workerCount = json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1), "tucube_tcp_epoll.workerMaxClients"));
+    if(json_object_get(json_array_get(moduleConfig->json, 1),
+    "tucube_tcp_epoll.workerMaxClients") != NULL)
+        workerCount = json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1),
+	"tucube_tcp_epoll.workerMaxClients"));
 
     if(workerCount == 0) {
         warnx("%s: %u: Argument tucube.workerCount is required", __FILE__, __LINE__);
@@ -216,8 +222,9 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
 		    .object.pointer = &tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]],
 		    .read = gaio_FdPointer_read,
 		    .write = gaio_FdPointer_write,
-		    .sendfile = gaio_FdPointer_sendfile,
+		    .sendfile = gaio_Generic_sendfile,
 		    .fcntl = gaio_FdPointer_fcntl,
+		    .fileno = gaio_FdPointer_fileno,
 		    .close = gaio_FdPointer_close
                 };
 
