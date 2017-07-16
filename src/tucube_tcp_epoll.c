@@ -219,13 +219,13 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
                 tlModule->clDataListArray[clientSocket] = malloc(1 * sizeof(struct tucube_ClData_List));
                 GENC_LIST_INIT(tlModule->clDataListArray[clientSocket]);
 		struct gaio_Io clientIo = {
-		    .object.pointer = &tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]],
-		    .read = gaio_FdPointer_read,
-		    .write = gaio_FdPointer_write,
+		    .object.integer = tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]],
+		    .read = gaio_Fd_read,
+		    .write = gaio_Fd_write,
 		    .sendfile = gaio_Generic_sendfile,
-		    .fcntl = gaio_FdPointer_fcntl,
-		    .fileno = gaio_FdPointer_fileno,
-		    .close = gaio_FdPointer_close
+		    .fcntl = gaio_Fd_fcntl,
+		    .fileno = gaio_Fd_fileno,
+		    .close = gaio_Fd_close
                 };
 
                 if(TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(
@@ -317,6 +317,7 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
             }
             else {
                 warnx("%s: %u: Unexpected file descriptor %d", __FILE__, __LINE__, tlModule->epollEventArray[index].data.fd); // This shouldn't happen at all
+		warnx("%s: %u: %d %d", __FILE__, __LINE__, tlModule->clientTimerFdArray[tlModule->epollEventArray[index].data.fd], tlModule->clientSocketArray[tlModule->epollEventArray[index].data.fd]);
                 pthread_exit(NULL);
             }
         }
