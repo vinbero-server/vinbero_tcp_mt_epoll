@@ -224,6 +224,7 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
 		    .write = gaio_Fd_write,
 		    .sendfile = gaio_Generic_sendfile,
 		    .fcntl = gaio_Fd_fcntl,
+		    .fstat = gaio_Fd_fstat,
 		    .fileno = gaio_Fd_fileno,
 		    .close = gaio_Fd_close
                 };
