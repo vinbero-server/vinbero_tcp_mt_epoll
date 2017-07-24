@@ -220,6 +220,8 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
                 GENC_LIST_INIT(tlModule->clDataListArray[clientSocket]);
 		struct gaio_Io clientIo = {
 		    .object.integer = tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]],
+                };
+		struct gaio_Io_Callbacks clientIoCallbacks = {
 		    .read = gaio_Fd_read,
 		    .write = gaio_Fd_write,
 		    .sendfile = gaio_Generic_sendfile,
@@ -227,7 +229,8 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
 		    .fstat = gaio_Fd_fstat,
 		    .fileno = gaio_Fd_fileno,
 		    .close = gaio_Fd_close
-                };
+		};
+		clientIo.callbacks = &clientIoCallbacks;
 
                 if(TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(
                     GENC_LIST_ELEMENT_NEXT(module),
