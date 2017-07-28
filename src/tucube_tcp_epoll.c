@@ -162,6 +162,7 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
                         warn("%s: %u", __FILE__, __LINE__);
                     continue;
                 }
+		warnx("New client %d", clientSocket);
 
                 if(clientSocket > (tlModule->clientArraySize - 1) - 1) { // '-1': room for timerfd
                     warnx("%s: %u: Unable to accept more clients", __FILE__, __LINE__);
@@ -221,7 +222,7 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
 		struct gaio_Io clientIo = {
 		    .object.integer = tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]],
                 };
-		struct gaio_Io_Callbacks clientIoCallbacks = {
+		struct gaio_Io_Methods clientIoMethods = {
 		    .read = gaio_Fd_read,
 		    .write = gaio_Fd_write,
 		    .sendfile = gaio_Generic_sendfile,
@@ -230,7 +231,7 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
 		    .fileno = gaio_Fd_fileno,
 		    .close = gaio_Fd_close
 		};
-		clientIo.callbacks = &clientIoCallbacks;
+		clientIo.methods = &clientIoMethods;
 
                 if(TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(
                     GENC_LIST_ELEMENT_NEXT(module),
