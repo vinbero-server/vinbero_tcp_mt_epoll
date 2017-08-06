@@ -162,7 +162,6 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
                         warn("%s: %u", __FILE__, __LINE__);
                     continue;
                 }
-		warnx("New client %d", clientSocket);
 
                 if(clientSocket > (tlModule->clientArraySize - 1) - 1) { // '-1': room for timerfd
                     warnx("%s: %u: Unable to accept more clients", __FILE__, __LINE__);

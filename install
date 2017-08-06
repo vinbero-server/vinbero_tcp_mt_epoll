@@ -1,2 +1,0 @@
-sudo mkdir -p /usr/local/lib/tucube
-sudo gcc src/tucube_tcp_epoll.c -o /usr/local/lib/tucube/tucube_tcp_epoll.so -std=gnu99 -fPIC -shared -g3
