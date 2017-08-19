@@ -17,7 +17,7 @@
 #include <tucube/tucube_ICLocal.h>
 #include <tucube/tucube_IClService.h>
 #include <libgenc/genc_cast.h>
-#include <libgenc/genc_list.h>
+#include <libgenc/genc_List.h>
 #include <gaio.h>
 
 struct tucube_tcp_epoll_Module {
