@@ -58,27 +58,10 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
     TUCUBE_ICLOCAL_DLSYM(module, struct tucube_tcp_epoll_Module);
     TUCUBE_ICLSERVICE_DLSYM(module, struct tucube_tcp_epoll_Module);
 
-    TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_sec =
-        TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_sec = 3;
-
-    if(json_object_get(json_array_get(moduleConfig->json, 1),
-    "tucube_tcp_epoll.clientTimeoutSeconds") != NULL) {
-        TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_sec =
-            TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_sec =
-            json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1),
-	    "tucube_tcp_epoll.clientTimeoutSeconds"));
-    }
-
-    TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_nsec = 
-        TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_nsec = 0;
-
-    if(json_object_get(json_array_get(moduleConfig->json, 1),
-    "tucube_tcp_epoll.clientTimeoutNanoSeconds") != NULL) {
-        TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_nsec =
-            TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_nsec =
-            json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1),
-	    "tucube_tcp_epoll.clientTimeoutNanoSeconds"));
-    }
+    TUCUBE_MODULE_GET_CONFIG(moduleConfig, "tucube_tcp_epoll.clientTimeoutSeconds", integer, 3, &(TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_sec));
+    TUCUBE_MODULE_GET_CONFIG(moduleConfig, "tucube_tcp_epoll.clientTimeoutSeconds", integer, 3, &(TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_sec));
+    TUCUBE_MODULE_GET_CONFIG(moduleConfig, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, 0, &(TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_nsec));
+    TUCUBE_MODULE_GET_CONFIG(moduleConfig, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, 0, &(TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_nsec));
 
     if(TUCUBE_LOCAL_MODULE->tucube_IBase_init(GENC_LIST_ELEMENT_NEXT(moduleConfig),
               moduleList, (void*[]){NULL}) == -1) {
