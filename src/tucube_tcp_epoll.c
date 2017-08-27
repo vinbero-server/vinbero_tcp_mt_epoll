@@ -58,10 +58,34 @@ int tucube_IBase_init(struct tucube_Module_Config* moduleConfig, struct tucube_M
     TUCUBE_ICLOCAL_DLSYM(module, struct tucube_tcp_epoll_Module);
     TUCUBE_ICLSERVICE_DLSYM(module, struct tucube_tcp_epoll_Module);
 
+<<<<<<< HEAD
     TUCUBE_MODULE_GET_CONFIG(moduleConfig, "tucube_tcp_epoll.clientTimeoutSeconds", integer, &(TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_sec), 3);
     TUCUBE_MODULE_GET_CONFIG(moduleConfig, "tucube_tcp_epoll.clientTimeoutSeconds", integer, &(TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_sec), 3);
     TUCUBE_MODULE_GET_CONFIG(moduleConfig, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, &(TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_nsec), 0);
     TUCUBE_MODULE_GET_CONFIG(moduleConfig, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, &(TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_nsec), 0);
+=======
+    TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_sec =
+        TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_sec = 3;
+
+    if(json_object_get(json_array_get(moduleConfig->json, 1),
+    "tucube_tcp_epoll.clientTimeoutSeconds") != NULL) {
+        TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_sec =
+            TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_sec =
+            json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1),
+	    "tucube_tcp_epoll.clientTimeoutSeconds"));
+    }
+
+    TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_nsec = 
+        TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_nsec = 0;
+
+    if(json_object_get(json_array_get(moduleConfig->json, 1),
+    "tucube_tcp_epoll.clientTimeoutNanoSeconds") != NULL) {
+        TUCUBE_LOCAL_MODULE->clientTimeout.it_value.tv_nsec =
+            TUCUBE_LOCAL_MODULE->clientTimeout.it_interval.tv_nsec =
+            json_integer_value(json_object_get(json_array_get(moduleConfig->json, 1),
+	    "tucube_tcp_epoll.clientTimeoutNanoSeconds"));
+    }
+>>>>>>> 95ca603f540a2d56a9048051a821a34fbf1b646e
 
     if(TUCUBE_LOCAL_MODULE->tucube_IBase_init(GENC_LIST_ELEMENT_NEXT(moduleConfig),
               moduleList, (void*[]){NULL}) == -1) {
@@ -203,17 +227,26 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
                 GENC_LIST_INIT(tlModule->clDataListArray[clientSocket]);
 		struct gaio_Io clientIo = {
 		    .object.integer = tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]],
+<<<<<<< HEAD
                 };
 		struct gaio_Io_Methods clientIoMethods = {
+=======
+>>>>>>> 95ca603f540a2d56a9048051a821a34fbf1b646e
 		    .read = gaio_Fd_read,
 		    .write = gaio_Fd_write,
 		    .sendfile = gaio_Generic_sendfile,
 		    .fcntl = gaio_Fd_fcntl,
+<<<<<<< HEAD
 		    .fstat = gaio_Fd_fstat,
 		    .fileno = gaio_Fd_fileno,
 		    .close = gaio_Fd_close
 		};
 		clientIo.methods = &clientIoMethods;
+=======
+		    .fileno = gaio_Fd_fileno,
+		    .close = gaio_Fd_close
+                };
+>>>>>>> 95ca603f540a2d56a9048051a821a34fbf1b646e
 
                 if(TUCUBE_LOCAL_MODULE->tucube_ICLocal_init(
                     GENC_LIST_ELEMENT_NEXT(module),
