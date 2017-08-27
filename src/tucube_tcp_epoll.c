@@ -204,7 +204,7 @@ int tucube_ITlService_call(struct tucube_Module* module, void* args[]) {
 		struct gaio_Io clientIo = {
 		    .object.integer = tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]],
                 };
-		struct gaio_Io_Methods clientIoMethods = {
+		struct gaio_Methods clientIoMethods = {
 		    .read = gaio_Fd_read,
 		    .write = gaio_Fd_write,
 		    .sendfile = gaio_Generic_sendfile,
