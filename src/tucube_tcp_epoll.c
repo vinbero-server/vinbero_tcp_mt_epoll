@@ -66,6 +66,7 @@ warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     struct tucube_tcp_epoll_TlModule* tlModule = malloc(1 * sizeof(struct tucube_tcp_epoll_TlModule));
     int workerCount = 0;
     int workerMaxClients = 0;
+    
     if(json_object_get(json_array_get(config->json, 1), "tucube.workerCount") != NULL)
         workerCount = json_integer_value(json_object_get(json_array_get(config->json, 1), "tucube.workerCount"));
     if(json_object_get(json_array_get(config->json, 1),
@@ -76,6 +77,7 @@ warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
         warnx("%s: %u: Argument tucube.workerCount is required", __FILE__, __LINE__);
         pthread_exit(NULL);
     }
+
     if(workerMaxClients < 1 || workerMaxClients == LONG_MIN || workerMaxClients == LONG_MAX)
         workerMaxClients = 1024;
     tlModule->epollEventArraySize = workerMaxClients * 2 + 1; // '* 2': socket, timerfd; '+ 1': serverSocket; 
