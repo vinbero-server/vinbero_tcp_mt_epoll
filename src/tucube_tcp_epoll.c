@@ -44,15 +44,17 @@ TUCUBE_ITLOCAL_FUNCTIONS;
 TUCUBE_ITLSERVICE_FUNCTIONS;
 
 int tucube_IModule_init(struct tucube_Module* module, struct tucube_Config* config, void* args[]) {
-    warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
+warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
+    module->name = "tucube_tcp_mt_epoll";
+    module->version = "0.0.1";
     module->localModule.pointer = malloc(1 * sizeof(struct tucube_tcp_epoll_Module));
     module->tlModuleKey = malloc(1 * sizeof(pthread_key_t));
     pthread_key_create(module->tlModuleKey, NULL);
     struct tucube_tcp_epoll_Module* localModule = module->localModule.pointer;
-    TUCUBE_CONFIG_GET(config, module->id, "tucube_tcp_epoll.clientTimeoutSeconds", integer, &(localModule->clientTimeout.it_value.tv_sec), 3);
-    TUCUBE_CONFIG_GET(config, module->id, "tucube_tcp_epoll.clientTimeoutSeconds", integer, &(localModule->clientTimeout.it_interval.tv_sec), 3);
-    TUCUBE_CONFIG_GET(config, module->id, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, &(localModule->clientTimeout.it_value.tv_nsec), 0);
-    TUCUBE_CONFIG_GET(config, module->id, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, &(localModule->clientTimeout.it_interval.tv_nsec), 0);
+    TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.clientTimeoutSeconds", integer, &(localModule->clientTimeout.it_value.tv_sec), 3);
+    TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.clientTimeoutSeconds", integer, &(localModule->clientTimeout.it_interval.tv_sec), 3);
+    TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, &(localModule->clientTimeout.it_value.tv_nsec), 0);
+    TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, &(localModule->clientTimeout.it_interval.tv_nsec), 0);
     return 0;
 }
 
@@ -64,22 +66,13 @@ int tucube_ITLocal_init(struct tucube_Module* module, struct tucube_Config* conf
 warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     struct tucube_tcp_epoll_Module* localModule = module->localModule.pointer;
     struct tucube_tcp_epoll_TlModule* tlModule = malloc(1 * sizeof(struct tucube_tcp_epoll_TlModule));
+    int errorVariable;
     int workerCount = 0;
-    int workerMaxClients = 0;
-    
-    if(json_object_get(json_array_get(config->json, 1), "tucube.workerCount") != NULL)
-        workerCount = json_integer_value(json_object_get(json_array_get(config->json, 1), "tucube.workerCount"));
-    if(json_object_get(json_array_get(config->json, 1),
-    "tucube_tcp_epoll.workerMaxClients") != NULL)
-        workerCount = json_integer_value(json_object_get(json_array_get(config->json, 1),
-	"tucube_tcp_epoll.workerMaxClients"));
-    if(workerCount == 0) {
-        warnx("%s: %u: Argument tucube.workerCount is required", __FILE__, __LINE__);
-        pthread_exit(NULL);
-    }
-
-    if(workerMaxClients < 1 || workerMaxClients == LONG_MIN || workerMaxClients == LONG_MAX)
-        workerMaxClients = 1024;
+    int workerMaxClients;
+    TUCUBE_CONFIG_GET(config, module, "tucube.workerCount", integer, &(workerCount), &errorVariable);
+    if(errorVariable == 1)
+        return -1;
+    TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.workerMaxClients", integer, &(workerMaxClients), 1024);
     tlModule->epollEventArraySize = workerMaxClients * 2 + 1; // '* 2': socket, timerfd; '+ 1': serverSocket; 
     tlModule->epollEventArray = malloc(tlModule->epollEventArraySize * sizeof(struct epoll_event));
     tlModule->clientArraySize = workerMaxClients * 2 * workerCount + 1 + 1 + 3; //'+ 1': serverSocket; '+ 1': epollFd; '+ 3': stdin, stdout, stderr; multipliying workerCount because file descriptors are shared among threads;

@@ -1,0 +1,21 @@
+{
+    "core": {
+        "config": {"tucube.setUid": 1001},
+        "next": ["tucube_tcp"]
+    },
+    "tucube_tcp": {
+        "path": "/usr/local/lib/tucube/tucube_tcp.so",
+        "config": {"tucube_tcp.port": 8000, "tucube_tcp.reuseAddress": true},
+        "next": ["tucube_mt"]
+    }, 
+    "tucube_mt": {
+        "path": "/usr/local/lib/tucube/tucube_mt.so",
+        "config": {"tucube_mt.workerCount": 4},
+        "next": ["tucube_tcp_epoll"]
+    },
+    "tucube_tcp_epoll": {
+        "path": "/usr/local/lib/tucube/tucube_tcp_epoll.so",
+        "config": {},
+        "next": []
+    }
+}
