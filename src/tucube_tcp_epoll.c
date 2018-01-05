@@ -22,6 +22,7 @@
 #include <gaio.h>
 
 struct tucube_tcp_epoll_Interface {
+    TUCUBE_ITLOCAL_FUNCTION_POINTERS;
     TUCUBE_ICLOCAL_FUNCTION_POINTERS;
     TUCUBE_ICLSERVICE_FUNCTION_POINTERS;
 };
@@ -55,6 +56,51 @@ warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.clientTimeoutSeconds", integer, &(localModule->clientTimeout.it_interval.tv_sec), 3);
     TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, &(localModule->clientTimeout.it_value.tv_nsec), 0);
     TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, &(localModule->clientTimeout.it_interval.tv_nsec), 0);
+    struct tucube_Module_Ids childModuleIds;
+    GENC_ARRAY_LIST_INIT(&childModuleIds);
+    TUCUBE_CONFIG_GET_CHILD_MODULE_IDS(config, module->id, &childModuleIds);
+    GENC_TREE_NODE_FOR_EACH_CHILD(module, index) {
+        struct tucube_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
+        childModule->interface = malloc(sizeof(struct tucube_tcp_epoll_Interface));
+        struct tucube_tcp_epoll_Interface* childInterface = childModule->interface;
+        int errorVariable;
+        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ITLocal_init, &errorVariable);
+        if(errorVariable == 1) {
+            GENC_ARRAY_LIST_FREE(&childModuleIds);
+            return -1;
+        }
+        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ITLocal_rInit, &errorVariable);
+        if(errorVariable == 1) {
+            GENC_ARRAY_LIST_FREE(&childModuleIds);
+            return -1;
+        }
+        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ITLocal_destroy, &errorVariable);
+        if(errorVariable == 1) {
+            GENC_ARRAY_LIST_FREE(&childModuleIds);
+            return -1;
+        }
+        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ITLocal_rDestroy, &errorVariable);
+        if(errorVariable == 1) {
+            GENC_ARRAY_LIST_FREE(&childModuleIds);
+            return -1;
+        }
+        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ICLocal_init, &errorVariable);
+        if(errorVariable == 1) {
+            GENC_ARRAY_LIST_FREE(&childModuleIds);
+            return -1;
+        }
+        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ICLocal_destroy, &errorVariable);
+        if(errorVariable == 1) {
+            GENC_ARRAY_LIST_FREE(&childModuleIds);
+            return -1;
+        }
+        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_IClService_call, &errorVariable);
+        if(errorVariable == 1) {
+            GENC_ARRAY_LIST_FREE(&childModuleIds);
+            return -1;
+        }
+    }
+    GENC_ARRAY_LIST_FREE(&childModuleIds);
     return 0;
 }
 
@@ -67,12 +113,12 @@ warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     struct tucube_tcp_epoll_Module* localModule = module->localModule.pointer;
     struct tucube_tcp_epoll_TlModule* tlModule = malloc(1 * sizeof(struct tucube_tcp_epoll_TlModule));
     int errorVariable;
-    int workerCount = 0;
+    int workerCount;
     int workerMaxClients;
-    TUCUBE_CONFIG_GET(config, module, "tucube.workerCount", integer, &(workerCount), &errorVariable);
+    TUCUBE_CONFIG_GET_REQUIRED(config, module, "tucube_mt.workerCount", integer, &workerCount, &errorVariable);
     if(errorVariable == 1)
         return -1;
-    TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.workerMaxClients", integer, &(workerMaxClients), 1024);
+    TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.workerMaxClients", integer, &workerMaxClients, 1024);
     tlModule->epollEventArraySize = workerMaxClients * 2 + 1; // '* 2': socket, timerfd; '+ 1': serverSocket; 
     tlModule->epollEventArray = malloc(tlModule->epollEventArraySize * sizeof(struct epoll_event));
     tlModule->clientArraySize = workerMaxClients * 2 * workerCount + 1 + 1 + 3; //'+ 1': serverSocket; '+ 1': epollFd; '+ 3': stdin, stdout, stderr; multipliying workerCount because file descriptors are shared among threads;
