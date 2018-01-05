@@ -152,7 +152,7 @@ warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
             warnx("%s: %u: tucube_ICLocal_init() failed", __FILE__, __LINE__);
             return -1;
         }
-        if(tucube_tcp_epoll_initClData(module, childClData, clientIo) == -1)
+        if(tucube_tcp_epoll_initClData(childModule, childClData, clientIo) == -1)
             return -1;
     }
     return 0;
