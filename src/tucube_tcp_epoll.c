@@ -162,18 +162,18 @@ int tucube_tcp_epoll_destroyClData(struct tucube_Module* module, struct tucube_C
     GENC_TREE_NODE_FOR_EACH_CHILD(clData, index) {
         struct tucube_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
         struct tucube_ClData* childClData = &GENC_TREE_NODE_GET_CHILD(clData, index);
-        if(tucube_tcp_epoll_destroyClData(module, clData) == -1) {
-            GENC_TREE_NODE_FREE_CHILDREN(childClData);
+        if(tucube_tcp_epoll_destroyClData(childModule, childClData) == -1) {
+            GENC_TREE_NODE_FREE_CHILDREN(clData);
             return -1;
         }
         struct tucube_tcp_epoll_Interface* childInterface = childModule->interface;
         if(childInterface->tucube_ICLocal_destroy(childModule, childClData) == -1) { // destruction failed? this should be fatal!
             warnx("%s: %u: %s: tucube_ICLocal_destroy() failed", __FILE__, __LINE__, __FUNCTION__);
-            GENC_TREE_NODE_FREE_CHILDREN(childClData);
+            GENC_TREE_NODE_FREE_CHILDREN(clData);
             return -1;
         }
-        GENC_TREE_NODE_FREE_CHILDREN(childClData);
     }
+    GENC_TREE_NODE_FREE_CHILDREN(clData);
     return 0;
 }
 
