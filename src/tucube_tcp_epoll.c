@@ -17,6 +17,7 @@
 #include <tucube/tucube_ITlService.h>
 #include <tucube/tucube_ICLocal.h>
 #include <tucube/tucube_IClService.h>
+#include <libgenc/genc_args.h>
 #include <libgenc/genc_cast.h>
 #include <libgenc/genc_Tree.h>
 #include <gaio.h>
@@ -141,7 +142,7 @@ warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
         struct tucube_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
         struct tucube_ClData* childClData = &GENC_TREE_NODE_GET_CHILD(clData, index);
         struct tucube_tcp_epoll_Interface* childInterface = childModule->interface;
-        if(childInterface->tucube_ICLocal_init(childModule, childClData, (void*[]){clientIo, NULL}) == -1) {
+        if(childInterface->tucube_ICLocal_init(childModule, childClData, GENC_ARGS(clientIo)) == -1) {
             warnx("%s: %u: tucube_ICLocal_init() failed", __FILE__, __LINE__);
             return -1;
         }
@@ -283,7 +284,7 @@ static int tucube_tcp_epoll_handleRequest(
         struct tucube_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
         struct tucube_ClData* childClData = &GENC_TREE_NODE_GET_CHILD(tlModule->clDataArray[clientSocket], index);
         struct tucube_tcp_epoll_Interface* childInterface = childModule->interface;
-        if(childInterface->tucube_IClService_call(childModule, childClData, (void*[]){NULL}) == -1) {
+        if(childInterface->tucube_IClService_call(childModule, childClData, GENC_ARGS(NULL)) == -1) {
             warnx("%s: %u: tucube_IClService_call() failed", __FILE__, __LINE__);
             break;
         }
