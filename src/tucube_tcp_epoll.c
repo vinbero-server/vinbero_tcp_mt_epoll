@@ -56,51 +56,28 @@ warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.clientTimeoutSeconds", integer, &(localModule->clientTimeout.it_interval.tv_sec), 3);
     TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, &(localModule->clientTimeout.it_value.tv_nsec), 0);
     TUCUBE_CONFIG_GET(config, module, "tucube_tcp_epoll.clientTimeoutNanoSeconds", integer, &(localModule->clientTimeout.it_interval.tv_nsec), 0);
-    struct tucube_Module_Ids childModuleIds;
-    GENC_ARRAY_LIST_INIT(&childModuleIds);
-    TUCUBE_CONFIG_GET_CHILD_MODULE_IDS(config, module->id, &childModuleIds);
+
     GENC_TREE_NODE_FOR_EACH_CHILD(module, index) {
         struct tucube_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
         childModule->interface = malloc(sizeof(struct tucube_tcp_epoll_Interface));
         struct tucube_tcp_epoll_Interface* childInterface = childModule->interface;
         int errorVariable;
-        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ITLocal_init, &errorVariable);
+        TUCUBE_ITLOCAL_DLSYM(childInterface, childModule->dlHandle, &errorVariable);
         if(errorVariable == 1) {
-            GENC_ARRAY_LIST_FREE(&childModuleIds);
+            warnx("module %s doesn't satisfy ITLOCAL interface", childModule->id);
             return -1;
         }
-        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ITLocal_rInit, &errorVariable);
+        TUCUBE_ICLOCAL_DLSYM(childInterface, childModule->dlHandle, &errorVariable);
         if(errorVariable == 1) {
-            GENC_ARRAY_LIST_FREE(&childModuleIds);
+            warnx("module %s doesn't satisfy ICLOCAL interface", childModule->id);
             return -1;
         }
-        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ITLocal_destroy, &errorVariable);
+        TUCUBE_ICLSERVICE_DLSYM(childInterface, childModule->dlHandle, &errorVariable);
         if(errorVariable == 1) {
-            GENC_ARRAY_LIST_FREE(&childModuleIds);
-            return -1;
-        }
-        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ITLocal_rDestroy, &errorVariable);
-        if(errorVariable == 1) {
-            GENC_ARRAY_LIST_FREE(&childModuleIds);
-            return -1;
-        }
-        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ICLocal_init, &errorVariable);
-        if(errorVariable == 1) {
-            GENC_ARRAY_LIST_FREE(&childModuleIds);
-            return -1;
-        }
-        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_ICLocal_destroy, &errorVariable);
-        if(errorVariable == 1) {
-            GENC_ARRAY_LIST_FREE(&childModuleIds);
-            return -1;
-        }
-        TUCUBE_MODULE_DLSYM(childInterface, childModule->dlHandle, tucube_IClService_call, &errorVariable);
-        if(errorVariable == 1) {
-            GENC_ARRAY_LIST_FREE(&childModuleIds);
+            warnx("module %s doesn't satisfy ICLSERVICE interface", childModule->id);
             return -1;
         }
     }
-    GENC_ARRAY_LIST_FREE(&childModuleIds);
     return 0;
 }
 
@@ -128,6 +105,14 @@ warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     memset(tlModule->clientTimerFdArray, -1, tlModule->clientArraySize * sizeof(int));
     tlModule->clDataArray = calloc(tlModule->clientArraySize, sizeof(struct tucube_ClData*));
     pthread_setspecific(*module->tlModuleKey, tlModule);
+    GENC_TREE_NODE_FOR_EACH_CHILD(module, index) {
+        struct tucube_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
+        struct tucube_tcp_epoll_Interface* childInterface = childModule->interface;
+        if(childInterface->tucube_ITLocal_init(childModule, config, args) == -1) {
+            warnx("tucube_ITLocal_init() failed at module %s", childModule->id);
+            return -1;
+        }
+    }
     return 0;
 }
 
@@ -136,10 +121,9 @@ warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
     return 0;
 }
 
-int tucube_tcp_epoll_initClData(struct tucube_Module* module, struct tucube_ClData* clData, struct gaio_Io* clientIo) {
+int tucube_tcp_epoll_preInitClData(struct tucube_Module* module, struct tucube_ClData* clData) {
 warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
-    int childCount = GENC_TREE_NODE_CHILD_COUNT(module);
-    GENC_TREE_NODE_INIT_CHILDREN(clData, childCount);
+    GENC_TREE_NODE_INIT_CHILDREN(clData, GENC_TREE_NODE_CHILD_COUNT(module));
     GENC_TREE_NODE_ZERO_CHILDREN(clData);
     GENC_TREE_NODE_FOR_EACH_CHILD(module, index) {
         struct tucube_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
@@ -147,13 +131,20 @@ warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
         struct tucube_ClData* childClData = &GENC_TREE_NODE_GET_CHILD(clData, index);
         GENC_TREE_NODE_INIT(childClData);
         GENC_TREE_NODE_SET_PARENT(childClData, clData);
+        tucube_tcp_epoll_preInitClData(childModule, childClData);
+    }
+}
+
+int tucube_tcp_epoll_initClData(struct tucube_Module* module, struct tucube_ClData* clData, struct gaio_Io* clientIo) {
+warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
+    GENC_TREE_NODE_FOR_EACH_CHILD(module, index) {
+        struct tucube_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
+        struct tucube_ClData* childClData = &GENC_TREE_NODE_GET_CHILD(clData, index);
         struct tucube_tcp_epoll_Interface* childInterface = childModule->interface;
         if(childInterface->tucube_ICLocal_init(childModule, childClData, (void*[]){clientIo, NULL}) == -1) {
             warnx("%s: %u: tucube_ICLocal_init() failed", __FILE__, __LINE__);
             return -1;
         }
-        if(tucube_tcp_epoll_initClData(childModule, childClData, clientIo) == -1)
-            return -1;
     }
     return 0;
 }
@@ -162,10 +153,6 @@ int tucube_tcp_epoll_destroyClData(struct tucube_Module* module, struct tucube_C
     GENC_TREE_NODE_FOR_EACH_CHILD(clData, index) {
         struct tucube_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
         struct tucube_ClData* childClData = &GENC_TREE_NODE_GET_CHILD(clData, index);
-        if(tucube_tcp_epoll_destroyClData(childModule, childClData) == -1) {
-            GENC_TREE_NODE_FREE_CHILDREN(clData);
-            return -1;
-        }
         struct tucube_tcp_epoll_Interface* childInterface = childModule->interface;
         if(childInterface->tucube_ICLocal_destroy(childModule, childClData) == -1) { // destruction failed? this should be fatal!
             warnx("%s: %u: %s: tucube_ICLocal_destroy() failed", __FILE__, __LINE__, __FUNCTION__);
@@ -234,9 +221,10 @@ static void tucube_tcp_epoll_handleConnection(struct tucube_Module* module, stru
         return;
     }
     tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]] = clientSocket;
+/*
     struct gaio_Io clientIo = {
         .object.integer = tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]],
-    };
+    }; 
     struct gaio_Methods clientIoMethods = {
         .read = gaio_Fd_read,
         .write = gaio_Fd_write,
@@ -247,9 +235,21 @@ static void tucube_tcp_epoll_handleConnection(struct tucube_Module* module, stru
         .close = gaio_Fd_close
     };
     clientIo.methods = &clientIoMethods;
+*/
+    struct gaio_Io* clientIo = malloc(sizeof(struct gaio_Io));
+    clientIo->object.integer = tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]];
+    clientIo->methods = malloc(sizeof(struct gaio_Methods));
+    clientIo->methods->read = gaio_Fd_read;
+    clientIo->methods->write = gaio_Fd_write;
+    clientIo->methods->sendfile = gaio_Generic_sendfile;
+    clientIo->methods->fcntl = gaio_Fd_fcntl;
+    clientIo->methods->fstat = gaio_Fd_fstat;
+    clientIo->methods->fileno = gaio_Fd_fileno;
+    clientIo->methods->close = gaio_Fd_close;
+
     tlModule->clDataArray[clientSocket] = malloc(1 * sizeof(struct tucube_ClData));
     GENC_TREE_NODE_INIT(tlModule->clDataArray[clientSocket]);
-    if(tucube_tcp_epoll_initClData(module, tlModule->clDataArray[clientSocket], &clientIo) == -1) {
+    if(tucube_tcp_epoll_preInitClData(module, tlModule->clDataArray[clientSocket]) == -1) {
         tucube_tcp_epoll_destroyClData(module, tlModule->clDataArray[clientSocket]); // what if this also failed? (FATAL)
         free(tlModule->clDataArray[clientSocket]);
         close(clientSocket);
@@ -257,6 +257,16 @@ static void tucube_tcp_epoll_handleConnection(struct tucube_Module* module, stru
         tlModule->clDataArray[clientSocket] = NULL;
         tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]] = -1;
         tlModule->clientTimerFdArray[clientSocket] = -1;
+    }
+    if(tucube_tcp_epoll_initClData(module, tlModule->clDataArray[clientSocket], clientIo) == -1) {
+        tucube_tcp_epoll_destroyClData(module, tlModule->clDataArray[clientSocket]); // what if this also failed? (FATAL)
+        free(tlModule->clDataArray[clientSocket]);
+        close(clientSocket);
+        close(tlModule->clientTimerFdArray[clientSocket]);
+        tlModule->clDataArray[clientSocket] = NULL;
+        tlModule->clientSocketArray[tlModule->clientTimerFdArray[clientSocket]] = -1;
+        tlModule->clientTimerFdArray[clientSocket] = -1;
+        return;
     }
 }
 
@@ -377,6 +387,14 @@ warnx("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
 }
 
 int tucube_ITLocal_destroy(struct tucube_Module* module) {
+    GENC_TREE_NODE_FOR_EACH_CHILD(module, index) {
+        struct tucube_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
+        struct tucube_tcp_epoll_Interface* childInterface = childModule->interface;
+        if(childInterface->tucube_ITLocal_destroy(childModule) == -1) {
+            warnx("tucube_ITLocal_destroy() failed at module %s", childModule->id);
+            return -1;
+        }
+    }
     return 0;
 }
 
