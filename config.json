@@ -1,0 +1,21 @@
+{
+    "core": {
+        "config": {"vinbero.setUid": 1001},
+        "next": ["vinbero_tcp"]
+    },
+    "vinbero_tcp": {
+        "path": "/usr/local/lib/vinbero/vinbero_tcp.so",
+        "config": {"vinbero_tcp.port": 8000, "vinbero_tcp.reuseAddress": true},
+        "next": ["vinbero_mt"]
+    }, 
+    "vinbero_mt": {
+        "path": "/usr/local/lib/vinbero/vinbero_mt.so",
+        "config": {"vinbero_mt.workerCount": 4},
+        "next": ["vinbero_tcp_mt_epoll"]
+    },
+    "vinbero_tcp_mt_epoll": {
+        "path": "/usr/local/lib/vinbero/vinbero_tcp_mt_epoll.so",
+        "config": {},
+        "next": []
+    }
+}
