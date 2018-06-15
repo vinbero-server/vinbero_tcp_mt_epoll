@@ -15,11 +15,11 @@
 #include <vinbero_common/vinbero_common_Log.h>
 #include <vinbero_common/vinbero_common_Module.h>
 #include <vinbero_common/vinbero_common_ClData.h>
-#include <vinbero/vinbero_Interface_MODULE.h>
-#include <vinbero/vinbero_Interface_TLOCAL.h>
-#include <vinbero/vinbero_Interface_TLSERVICE.h>
-#include <vinbero/vinbero_Interface_CLOCAL.h>
-#include <vinbero/vinbero_Interface_CLSERVICE.h>
+#include <vinbero/vinbero_interface_MODULE.h>
+#include <vinbero/vinbero_interface_TLOCAL.h>
+#include <vinbero/vinbero_interface_TLSERVICE.h>
+#include <vinbero/vinbero_interface_CLOCAL.h>
+#include <vinbero/vinbero_interface_CLSERVICE.h>
 #include <libgenc/genc_args.h>
 #include <libgenc/genc_cast.h>
 #include <libgenc/genc_Tree.h>
@@ -42,7 +42,7 @@ VINBERO_INTERFACE_MODULE_FUNCTIONS;
 VINBERO_INTERFACE_TLOCAL_FUNCTIONS;
 VINBERO_INTERFACE_TLSERVICE_FUNCTIONS;
 
-int vinbero_Interface_MODULE_init(struct vinbero_common_Module* module) {
+int vinbero_interface_MODULE_init(struct vinbero_common_Module* module) {
     VINBERO_COMMON_LOG_TRACE2();
     int ret;
     module->name = "vinbero_tcp_mt_epoll";
@@ -63,18 +63,18 @@ int vinbero_Interface_MODULE_init(struct vinbero_common_Module* module) {
 /*
     GENC_TREE_NODE_FOR_EACH_CHILD(module, index) {
         struct vinbero_common_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
-        struct vinbero_tcp_mt_epoll_Interface childInterface;
-        VINBERO_INTERFACE_TLOCAL_DLSYM(&childInterface, &childModule->dlHandle, &ret);
+        struct vinbero_tcp_mt_epoll_interface childinterface;
+        VINBERO_INTERFACE_TLOCAL_DLSYM(&childinterface, &childModule->dlHandle, &ret);
         if(ret < 0) {
             VINBERO_COMMON_LOG_ERROR("module %s doesn't satisfy ITLOCAL interface", childModule->id);
             return ret;
         }
-        VINBERO_ICLOCAL_DLSYM(&childInterface, &childModule->dlHandle, &ret);
+        VINBERO_ICLOCAL_DLSYM(&childinterface, &childModule->dlHandle, &ret);
         if(ret < 0) {
             VINBERO_COMMON_LOG_ERROR("module %s doesn't satisfy ICLOCAL interface", childModule->id);
             return ret;
         }
-        VINBERO_ICLSERVICE_DLSYM(&childInterface, &childModule->dlHandle, &ret);
+        VINBERO_ICLSERVICE_DLSYM(&childinterface, &childModule->dlHandle, &ret);
         if(ret < 0) {
             VINBERO_COMMON_LOG_ERROR("module %s doesn't satisfy ICLSERVICE interface", childModule->id);
             return ret;
@@ -84,11 +84,11 @@ int vinbero_Interface_MODULE_init(struct vinbero_common_Module* module) {
     return 0;
 }
 
-int vinbero_Interface_MODULE_rInit(struct vinbero_common_Module* module) {
+int vinbero_interface_MODULE_rInit(struct vinbero_common_Module* module) {
     return 0;
 }
 
-int vinbero_Interface_TLOCAL_init(struct vinbero_common_Module* module) {
+int vinbero_interface_TLOCAL_init(struct vinbero_common_Module* module) {
     VINBERO_COMMON_LOG_TRACE2();
     int ret;
     struct vinbero_tcp_mt_epoll_Module* localModule = module->localModule.pointer;
@@ -118,7 +118,7 @@ int vinbero_Interface_TLOCAL_init(struct vinbero_common_Module* module) {
     return 0;
 }
 
-int vinbero_Interface_TLOCAL_rInit(struct vinbero_common_Module* module) {
+int vinbero_interface_TLOCAL_rInit(struct vinbero_common_Module* module) {
     VINBERO_COMMON_LOG_TRACE2();
     return 0;
 }
@@ -343,7 +343,7 @@ static void vinbero_tcp_mt_epoll_handleUnexpected(struct vinbero_common_Module* 
     VINBERO_COMMON_LOG_FATAL("%d %d", tlModule->clientTimerFdArray[fd], tlModule->clientSocketArray[fd]);
 }
 
-int vinbero_Interface_TLSERVICE_call(struct vinbero_common_Module* module, void* args[]) {
+int vinbero_interface_TLSERVICE_call(struct vinbero_common_Module* module, void* args[]) {
     VINBERO_COMMON_LOG_TRACE2();
     struct vinbero_tcp_mt_epoll_Module* localModule = module->localModule.pointer;
     int* serverSocket = (int*)args[0];
@@ -387,7 +387,7 @@ int vinbero_Interface_TLSERVICE_call(struct vinbero_common_Module* module, void*
     return 0;
 }
 
-int vinbero_Interface_TLOCAL_destroy(struct vinbero_common_Module* module) {
+int vinbero_interface_TLOCAL_destroy(struct vinbero_common_Module* module) {
     VINBERO_COMMON_LOG_TRACE2();
     int ret;
     GENC_TREE_NODE_FOR_EACH_CHILD(module, index) {
@@ -397,7 +397,7 @@ int vinbero_Interface_TLOCAL_destroy(struct vinbero_common_Module* module) {
     return 0;
 }
 
-int vinbero_Interface_TLOCAL_rDestroy(struct vinbero_common_Module* module) {
+int vinbero_interface_TLOCAL_rDestroy(struct vinbero_common_Module* module) {
     VINBERO_COMMON_LOG_TRACE2();
     struct vinbero_tcp_mt_epoll_Module* localModule = module->localModule.pointer;
     struct vinbero_tcp_mt_epoll_TlModule* tlModule = pthread_getspecific(*module->tlModuleKey);
@@ -413,12 +413,12 @@ int vinbero_Interface_TLOCAL_rDestroy(struct vinbero_common_Module* module) {
     return 0;
 }
 
-int vinbero_Interface_MODULE_destroy(struct vinbero_common_Module* module) {
+int vinbero_interface_MODULE_destroy(struct vinbero_common_Module* module) {
     VINBERO_COMMON_LOG_TRACE2();
     return 0;
 }
 
-int vinbero_Interface_MODULE_rDestroy(struct vinbero_common_Module* module) {
+int vinbero_interface_MODULE_rDestroy(struct vinbero_common_Module* module) {
     VINBERO_COMMON_LOG_TRACE2();
     struct vinbero_tcp_mt_epoll_Module* localModule = module->localModule.pointer;
     pthread_key_delete(*module->tlModuleKey);
