@@ -226,12 +226,14 @@ vinbero_tcp_mt_epoll_handleConnection(struct vinbero_common_TlModule* tlModule, 
     int clientSocket;
     struct epoll_event epollEvent;
     memset(&epollEvent, 0, 1 * sizeof(struct epoll_event));
-
     if((clientSocket = accept(*serverSocket, NULL, NULL)) == -1) {
-        if(errno != EAGAIN)
+        if(errno == EAGAIN)
+            VINBERO_COMMON_LOG_DEBUG("Other thread accepted the client");
+        else 
             VINBERO_COMMON_LOG_ERROR("accept() failed");
         return;
     }
+    VINBERO_COMMON_LOG_DEBUG("Accepted client, socket number is %d", clientSocket);
     if(clientSocket > (localTlModule->clientArraySize - 1) - 1) { // '-1': room for timerfd
         VINBERO_COMMON_LOG_ERROR("unable to accept more clients");
         close(clientSocket);
@@ -288,6 +290,7 @@ vinbero_tcp_mt_epoll_handleConnection(struct vinbero_common_TlModule* tlModule, 
     localTlModule->clModuleArray[clientSocket]->arg = clientIo;
     GENC_TREE_NODE_INIT(localTlModule->clModuleArray[clientSocket]);
     if((ret = vinbero_tcp_mt_epoll_loadChildClModules(localTlModule->clModuleArray[clientSocket])) < VINBERO_COMMON_STATUS_SUCCESS) {
+        VINBERO_COMMON_LOG_ERROR("vinbero_tcp_mt_epoll_loadChildClModules() failed");
         vinbero_tcp_mt_epoll_destroyChildClModules(localTlModule->clModuleArray[clientSocket]); // what if this also failed? (FATAL)
         free(localTlModule->clModuleArray[clientSocket]);
         close(clientSocket);
@@ -295,8 +298,10 @@ vinbero_tcp_mt_epoll_handleConnection(struct vinbero_common_TlModule* tlModule, 
         localTlModule->clModuleArray[clientSocket] = NULL;
         localTlModule->clientSocketArray[localTlModule->clientTimerFdArray[clientSocket]] = -1;
         localTlModule->clientTimerFdArray[clientSocket] = -1;
+        return;
     }
     if((ret = vinbero_tcp_mt_epoll_initChildClModules(localTlModule->clModuleArray[clientSocket])) < VINBERO_COMMON_STATUS_SUCCESS) {
+        VINBERO_COMMON_LOG_ERROR("vinbero_tcp_mt_epoll_initChildClModules() failed");
         vinbero_tcp_mt_epoll_destroyChildClModules(localTlModule->clModuleArray[clientSocket]); // what if this also failed? (FATAL)
         free(localTlModule->clModuleArray[clientSocket]);
         close(clientSocket);
@@ -361,6 +366,7 @@ static int vinbero_tcp_mt_epoll_handleError(struct vinbero_common_TlModule* tlMo
 }
 
 static int vinbero_tcp_mt_epoll_handleTimeout(struct vinbero_common_TlModule* tlModule, int* serverSocket, int timerFd) {
+    VINBERO_COMMON_LOG_TRACE2();
     int ret;
     struct vinbero_tcp_mt_epoll_TlModule* localTlModule = tlModule->localTlModule.pointer;
     uint64_t clientTimerFdValue;
@@ -404,36 +410,30 @@ int vinbero_interface_TLSERVICE_call(struct vinbero_common_TlModule* tlModule) {
         }
         for(int index = 0; index < epollEventCount; ++index) {
             if(localTlModule->epollEventArray[index].data.fd == *serverSocket) { // serverSocket
-
+                VINBERO_COMMON_LOG_DEBUG("Trying to accept new client");
                 vinbero_tcp_mt_epoll_handleConnection(tlModule, epollFd, serverSocket);
-
             } else if(localTlModule->clientTimerFdArray[localTlModule->epollEventArray[index].data.fd] != -1 &&
                       localTlModule->clientSocketArray[localTlModule->epollEventArray[index].data.fd] == -1) { // clientSocket
-
                 if(localTlModule->epollEventArray[index].events & EPOLLIN) {
-
+                    VINBERO_COMMON_LOG_DEBUG("Client socket %d is readable", localTlModule->epollEventArray[index].data.fd);
                     vinbero_tcp_mt_epoll_handleRequest(tlModule, serverSocket, localTlModule->epollEventArray[index].data.fd);
-
                 } else if(localTlModule->epollEventArray[index].events & EPOLLRDHUP) {
-
+                    VINBERO_COMMON_LOG_DEBUG("Client socket %d is disconnected", localTlModule->epollEventArray[index].data.fd);
                     vinbero_tcp_mt_epoll_handleDisconnection(tlModule, serverSocket, localTlModule->epollEventArray[index].data.fd);
-
                 } else if(localTlModule->epollEventArray[index].events & EPOLLHUP) {
-
+                    VINBERO_COMMON_LOG_WARN("Client socket %d has error", localTlModule->epollEventArray[index].data.fd);
                     vinbero_tcp_mt_epoll_handleError(tlModule, serverSocket, localTlModule->epollEventArray[index].data.fd);
-
                 }
             } else if(localTlModule->clientSocketArray[localTlModule->epollEventArray[index].data.fd] != -1 &&
                     localTlModule->clientTimerFdArray[localTlModule->epollEventArray[index].data.fd] == -1 &&
                     localTlModule->epollEventArray[index].events & EPOLLIN) { // clientTimerFd
-
+                VINBERO_COMMON_LOG_WARN("Client socket %d timeout", localTlModule->epollEventArray[index].data.fd);
                 vinbero_tcp_mt_epoll_handleTimeout(tlModule, serverSocket, localTlModule->epollEventArray[index].data.fd);
 
             } else {
-
+                VINBERO_COMMON_LOG_FATAL("Client socket %d is unexpected", localTlModule->epollEventArray[index].data.fd);
                 vinbero_tcp_mt_epoll_handleUnexpected(tlModule, serverSocket, localTlModule->epollEventArray[index].data.fd);
                 return VINBERO_COMMON_ERROR_UNKNOWN;
-
             }
         }
     }
