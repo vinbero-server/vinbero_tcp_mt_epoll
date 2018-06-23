@@ -382,11 +382,11 @@ static int vinbero_tcp_mt_epoll_handleTimeout(struct vinbero_common_TlModule* tl
     localTlModule->clientSocketArray[timerFd] = -1;
 }
 
-static void vinbero_tcp_mt_epoll_handleUnexpected(struct vinbero_common_TlModule* tlModule, int* serverSocket, int fd) {
+static void
+vinbero_tcp_mt_epoll_handleUnexpected(struct vinbero_common_TlModule* tlModule, int* serverSocket, int fd) {
     VINBERO_COMMON_LOG_TRACE2();
     struct vinbero_tcp_mt_epoll_TlModule* localTlModule = tlModule->localTlModule.pointer;
     VINBERO_COMMON_LOG_FATAL("Unexpected file descriptor %d", fd); // This shouldn't happen at all
-    VINBERO_COMMON_LOG_FATAL("%d %d", localTlModule->clientTimerFdArray[fd], localTlModule->clientSocketArray[fd]);
 }
 
 int vinbero_interface_TLSERVICE_call(struct vinbero_common_TlModule* tlModule) {
@@ -427,11 +427,10 @@ int vinbero_interface_TLSERVICE_call(struct vinbero_common_TlModule* tlModule) {
             } else if(localTlModule->clientSocketArray[localTlModule->epollEventArray[index].data.fd] != -1 &&
                     localTlModule->clientTimerFdArray[localTlModule->epollEventArray[index].data.fd] == -1 &&
                     localTlModule->epollEventArray[index].events & EPOLLIN) { // clientTimerFd
-                VINBERO_COMMON_LOG_WARN("Client socket %d timeout", localTlModule->epollEventArray[index].data.fd);
+                VINBERO_COMMON_LOG_WARN("Client socket %d timeout", localTlModule->clientSocketArray[localTlModule->epollEventArray[index].data.fd]);
                 vinbero_tcp_mt_epoll_handleTimeout(tlModule, serverSocket, localTlModule->epollEventArray[index].data.fd);
 
             } else {
-                VINBERO_COMMON_LOG_FATAL("Client socket %d is unexpected", localTlModule->epollEventArray[index].data.fd);
                 vinbero_tcp_mt_epoll_handleUnexpected(tlModule, serverSocket, localTlModule->epollEventArray[index].data.fd);
                 return VINBERO_COMMON_ERROR_UNKNOWN;
             }
