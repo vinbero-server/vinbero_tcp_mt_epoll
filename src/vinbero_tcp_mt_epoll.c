@@ -114,7 +114,6 @@ vinbero_interface_TLOCAL_init(struct vinbero_common_TlModule* tlModule) {
     localTlModule->clientIoMethods.read = gaio_Fd_read;
     localTlModule->clientIoMethods.write = gaio_Fd_write;
     localTlModule->clientIoMethods.sendfile = gaio_Generic_sendfile;
-    localTlModule->clientIoMethods.fcntl = gaio_Fd_fcntl;
     localTlModule->clientIoMethods.fstat = gaio_Fd_fstat;
     localTlModule->clientIoMethods.fileno = gaio_Fd_fileno;
     localTlModule->clientIoMethods.close = gaio_Fd_close;
