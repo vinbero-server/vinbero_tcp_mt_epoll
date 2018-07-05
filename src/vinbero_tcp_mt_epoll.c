@@ -27,6 +27,7 @@
 #include <libgenc/genc_cast.h>
 #include <libgenc/genc_Tree.h>
 #include <gaio.h>
+#include "vinbero_tcp_mt_epoll_Version.h"
 
 struct vinbero_tcp_mt_epoll_Module {
     struct itimerspec clientTimeout;
@@ -51,7 +52,7 @@ vinbero_interface_MODULE_init(struct vinbero_common_Module* module) {
     VINBERO_COMMON_LOG_TRACE2();
     int ret;
     module->name = "vinbero_tcp_mt_epoll";
-    module->version = "0.0.1";
+    module->version = VINBERO_TCP_MT_EPOLL_VERSION;
     module->localModule.pointer = malloc(1 * sizeof(struct vinbero_tcp_mt_epoll_Module));
     struct vinbero_tcp_mt_epoll_Module* localModule = module->localModule.pointer;
     int out;
@@ -114,7 +115,6 @@ vinbero_interface_TLOCAL_init(struct vinbero_common_TlModule* tlModule) {
     localTlModule->clientIoMethods.read = gaio_Fd_read;
     localTlModule->clientIoMethods.write = gaio_Fd_write;
     localTlModule->clientIoMethods.sendfile = gaio_Generic_sendfile;
-    localTlModule->clientIoMethods.fcntl = gaio_Fd_fcntl;
     localTlModule->clientIoMethods.fstat = gaio_Fd_fstat;
     localTlModule->clientIoMethods.fileno = gaio_Fd_fileno;
     localTlModule->clientIoMethods.close = gaio_Fd_close;
