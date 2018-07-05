@@ -28,6 +28,14 @@ before_install:
   - cd ../../
 
   - pwd
+  - git clone https://github.com/vinbero/libgaio
+  - cd libgaio
+  - mkdir build
+  - cd build
+  - cmake -DCMAKE_INSTALL_PREFIX:PATH=/usr ..
+  - cd ../../
+
+  - pwd
   - git clone https://github.com/vinbero/libfastdl
   - cd libfastdl
   - mkdir build
@@ -62,6 +70,12 @@ install:
 
   - pwd
   - cd libgenc/build
+  - make
+  - sudo make install
+  - cd ../../
+
+  - pwd
+  - cd libgaio/build
   - make
   - sudo make install
   - cd ../../
