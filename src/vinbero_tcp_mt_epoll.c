@@ -460,18 +460,17 @@ int
 vinbero_interface_TLOCAL_rDestroy(struct vinbero_common_TlModule* tlModule) {
     VINBERO_COMMON_LOG_TRACE2();
     struct vinbero_tcp_mt_epoll_TlModule* localTlModule = tlModule->localTlModule.pointer;
+    if(localTlModule != NULL) {
+        free(localTlModule->epollEventArray);
+        free(localTlModule->clientSocketArray);
+        free(localTlModule->clientTimerFdArray);
 
-    free(localTlModule->epollEventArray);
-    free(localTlModule->clientSocketArray);
-    free(localTlModule->clientTimerFdArray);
-
-    for(size_t index = 0; index != localTlModule->clientArraySize; ++index) {
-        if(localTlModule->clModuleArray[index] != NULL)
-            free(localTlModule->clModuleArray[index]);
+        for(size_t index = 0; index != localTlModule->clientArraySize; ++index) {
+            if(localTlModule->clModuleArray[index] != NULL)
+                free(localTlModule->clModuleArray[index]);
+        }
+        free(localTlModule->clModuleArray);
     }
-
-    free(localTlModule->clModuleArray);
-
     return VINBERO_COMMON_STATUS_SUCCESS;
 }
 
