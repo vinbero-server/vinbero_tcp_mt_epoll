@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(vinbero_tcp_mt_epoll C)
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
+
 set(vinbero_tcp_mt_epoll_version "0.1.0")
 set(vinbero_tcp_mt_epoll_soversion "0.1")
 
