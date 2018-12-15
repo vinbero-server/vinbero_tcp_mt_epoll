@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 project(vinbero_tcp_mt_epoll C)
-set(vinbero_tcp_mt_epoll_version "0.1.2")
-set(vinbero_tcp_mt_epoll_soversion "0.1")
+set(CMAKE_BUILD_TYPE RelWithDebInfo)
+
+set(vinbero_tcp_mt_epoll_version "0.2.0")
+set(vinbero_tcp_mt_epoll_soversion "0.2")
 
 if(CMAKE_VERSION VERSION_LESS "3.1")
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
