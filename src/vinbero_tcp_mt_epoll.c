@@ -104,9 +104,9 @@ vinbero_interface_TLOCAL_init(struct vinbero_common_TlModule* tlModule) {
     if((ret = vinbero_common_Config_getRequiredInt(tlModule->module->config, tlModule->module, "vinbero_mt.workerCount", &workerCount)) < VINBERO_COMMON_STATUS_SUCCESS)
         return ret;
     vinbero_common_Config_getInt(tlModule->module->config, tlModule->module, "vinbero_tcp_mt_epoll.workerMaxClients", &workerMaxClients, 1024);
-    localTlModule->epollEventArraySize = workerMaxClients * 2 + 1; // '* 2': socket, timerfd; '+ 1': serverSocket; 
+    localTlModule->epollEventArraySize = workerMaxClients * 2 + 1 + 1; // '* 2': socket, timerfd; '+ 1': serverSocket;  '+ 1': exitEventFd
     localTlModule->epollEventArray = malloc(localTlModule->epollEventArraySize * sizeof(struct epoll_event));
-    localTlModule->clientArraySize = workerMaxClients * 2 * workerCount + 1 + 1 + 3; //'+ 1': serverSocket; '+ 1': epollFd; '+ 3': stdin, stdout, stderr; multipliying workerCount because file descriptors are shared among threads;
+    localTlModule->clientArraySize = workerMaxClients * 2 * workerCount + 1 + 1 + 1 + 3; //'+ 1': serverSocket; '+ 1': epollFd; '+ 1': exitEventFd; '+ 3': stdin, stdout, stderr; multipliying workerCount because file descriptors are shared among threads;
     localTlModule->clientSocketArray = malloc(localTlModule->clientArraySize * sizeof(int));
     memset(localTlModule->clientSocketArray, -1, localTlModule->clientArraySize * sizeof(int));
     localTlModule->clientTimerFdArray = malloc(localTlModule->clientArraySize * sizeof(int));
@@ -404,16 +404,27 @@ vinbero_interface_TLSERVICE_call(struct vinbero_common_TlModule* tlModule) {
     int epollFd = epoll_create1(0);
     struct epoll_event epollEvent;
     memset(&epollEvent, 0, 1 * sizeof(struct epoll_event)); // to avoid valgrind VINBERO_COMMON_LOG_ERRORing: syscall param epoll_ctl(event) points to uninitialised byte(s)
+
+    epollEvent.events = EPOLLIN | EPOLLET;
+    epollEvent.data.fd = *tlModule->exitEventFd;
+    epoll_ctl(epollFd, EPOLL_CTL_ADD, *tlModule->exitEventFd, &epollEvent);
+
     epollEvent.events = EPOLLIN | EPOLLET;
     epollEvent.data.fd = *serverSocket;
     epoll_ctl(epollFd, EPOLL_CTL_ADD, *serverSocket, &epollEvent);
+
     for(int epollEventCount;;) {
         if((epollEventCount = epoll_wait(epollFd, localTlModule->epollEventArray, localTlModule->epollEventArraySize, -1)) == -1) {
             VINBERO_COMMON_LOG_ERROR("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
-            return -1;
+            return VINBERO_COMMON_ERROR_UNKNOWN;
         }
         for(int index = 0; index < epollEventCount; ++index) {
-            if(localTlModule->epollEventArray[index].data.fd == *serverSocket) { // serverSocket
+            if(localTlModule->epollEventArray[index].data.fd == *tlModule->exitEventFd) { // exitEventFd
+                VINBERO_COMMON_LOG_DEBUG("Exit event");
+                uint64_t counter;
+                read(*tlModule->exitEventFd, &counter, sizeof(counter));
+                return VINBERO_COMMON_STATUS_SUCCESS;
+            } else if(localTlModule->epollEventArray[index].data.fd == *serverSocket) { // serverSocket
                 VINBERO_COMMON_LOG_DEBUG("Trying to accept new client");
                 vinbero_tcp_mt_epoll_handleConnection(tlModule, epollFd, serverSocket);
             } else if(localTlModule->clientTimerFdArray[localTlModule->epollEventArray[index].data.fd] != -1 &&
