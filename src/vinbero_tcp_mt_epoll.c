@@ -420,7 +420,7 @@ vinbero_interface_TLSERVICE_call(struct vinbero_common_TlModule* tlModule) {
         }
         for(int index = 0; index < epollEventCount; ++index) {
             if(localTlModule->epollEventArray[index].data.fd == *tlModule->exitEventFd) { // exitEventFd
-                VINBERO_COMMON_LOG_DEBUG("Exit event");
+                VINBERO_COMMON_LOG_DEBUG("Exit event received");
                 uint64_t counter;
                 read(*tlModule->exitEventFd, &counter, sizeof(counter));
                 return VINBERO_COMMON_STATUS_SUCCESS;
