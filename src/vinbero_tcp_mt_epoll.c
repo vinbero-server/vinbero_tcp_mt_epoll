@@ -101,8 +101,8 @@ vinbero_interface_TLOCAL_init(struct vinbero_common_TlModule* tlModule) {
     struct vinbero_tcp_mt_epoll_TlModule* localTlModule = tlModule->localTlModule.pointer;
     int workerCount;
     int workerMaxClients;
-    if((ret = vinbero_common_Config_getRequiredInt(tlModule->module->config, tlModule->module, "vinbero_mt.workerCount", &workerCount)) < VINBERO_COMMON_STATUS_SUCCESS)
-        return ret;
+    if(vinbero_common_Config_getRequiredInt(tlModule->module->config, tlModule->module, "vinbero_mt.workerCount", &workerCount) == false)
+        return VINBERO_COMMON_ERROR_INVALID_CONFIG;
     vinbero_common_Config_getInt(tlModule->module->config, tlModule->module, "vinbero_tcp_mt_epoll.workerMaxClients", &workerMaxClients, 1024);
     localTlModule->epollEventArraySize = workerMaxClients * 2 + 1 + 1; // '* 2': socket, timerfd; '+ 1': serverSocket;  '+ 1': exitEventFd
     localTlModule->epollEventArray = malloc(localTlModule->epollEventArraySize * sizeof(struct epoll_event));
@@ -140,10 +140,11 @@ vinbero_interface_TLOCAL_rInit(struct vinbero_common_TlModule* tlModule) {
 static int
 vinbero_tcp_mt_epoll_loadChildClModules(struct vinbero_common_ClModule* clModule) {
     int ret;
-    GENC_TREE_NODE_INIT3(clModule, GENC_TREE_NODE_GET_CHILD_COUNT(clModule->tlModule));
-    GENC_TREE_NODE_FOR_EACH_CHILD(clModule, index) {
-        struct vinbero_common_ClModule* childClModule = &GENC_TREE_NODE_GET_CHILD(clModule, index);
-        childClModule->tlModule = &GENC_TREE_NODE_GET_CHILD(clModule->tlModule, index);
+    GENC_TREE_NODE_INIT2(clModule, GENC_TREE_NODE_CHILD_COUNT(clModule->tlModule));
+    GENC_TREE_NODE_FOR_EACH_CHILD(clModule->tlModule, index) {
+        struct vinbero_common_ClModule* childClModule = malloc(sizeof(struct vinbero_common_ClModule));
+        GENC_TREE_NODE_ADD_CHILD(clModule, childClModule);
+        childClModule->tlModule = GENC_TREE_NODE_GET_CHILD(clModule->tlModule, index);
         childClModule->localClModule.pointer = NULL;
         childClModule->arg = NULL;
         ret = vinbero_tcp_mt_epoll_loadChildClModules(childClModule);
@@ -158,7 +159,7 @@ vinbero_tcp_mt_epoll_initChildClModules(struct vinbero_common_ClModule* clModule
     VINBERO_COMMON_LOG_TRACE2();
     int ret;
     GENC_TREE_NODE_FOR_EACH_CHILD(clModule, index) {
-        struct vinbero_common_ClModule* childClModule = &GENC_TREE_NODE_GET_CHILD(clModule, index);
+        struct vinbero_common_ClModule* childClModule = GENC_TREE_NODE_GET_CHILD(clModule, index);
         if(childClModule->arg == NULL)
             childClModule->arg = clModule->arg;
         VINBERO_COMMON_CALL(CLOCAL, init, childClModule->tlModule->module, &ret, childClModule);
@@ -175,7 +176,7 @@ vinbero_tcp_mt_epoll_rInitChildClModules(struct vinbero_common_ClModule* clModul
     VINBERO_COMMON_LOG_TRACE2();
     int ret;
     GENC_TREE_NODE_FOR_EACH_CHILD(clModule, index) {
-        struct vinbero_common_ClModule* childClModule = &GENC_TREE_NODE_GET_CHILD(clModule, index);
+        struct vinbero_common_ClModule* childClModule = GENC_TREE_NODE_GET_CHILD(clModule, index);
         ret = vinbero_tcp_mt_epoll_rInitChildClModules(childClModule);
         if(ret < VINBERO_COMMON_STATUS_SUCCESS)
             return ret;
@@ -191,7 +192,7 @@ vinbero_tcp_mt_epoll_destroyChildClModules(struct vinbero_common_ClModule* clMod
     VINBERO_COMMON_LOG_TRACE2();
     int ret;
     GENC_TREE_NODE_FOR_EACH_CHILD(clModule, index) {
-        struct vinbero_common_ClModule* childClModule = &GENC_TREE_NODE_GET_CHILD(clModule, index);
+        struct vinbero_common_ClModule* childClModule = GENC_TREE_NODE_GET_CHILD(clModule, index);
         VINBERO_COMMON_CALL(CLOCAL, destroy, childClModule->tlModule->module, &ret, childClModule);
         if(ret < VINBERO_COMMON_STATUS_SUCCESS)
             return ret;
@@ -206,15 +207,16 @@ vinbero_tcp_mt_epoll_rDestroyChildClModules(struct vinbero_common_ClModule* clMo
     VINBERO_COMMON_LOG_TRACE2();
     int ret;
     GENC_TREE_NODE_FOR_EACH_CHILD(clModule, index) {
-        struct vinbero_common_ClModule* childClModule = &GENC_TREE_NODE_GET_CHILD(clModule, index);
+        struct vinbero_common_ClModule* childClModule = GENC_TREE_NODE_GET_CHILD(clModule, index);
         ret = vinbero_tcp_mt_epoll_rDestroyChildClModules(childClModule);
         if(ret < VINBERO_COMMON_STATUS_SUCCESS)
             return ret;
         VINBERO_COMMON_CALL(CLOCAL, rDestroy, childClModule->tlModule->module, &ret, childClModule);
         if(ret < VINBERO_COMMON_STATUS_SUCCESS)
             return ret;
+        GENC_TREE_NODE_FREE(childClModule);
+        free(childClModule);
     }
-//    GENC_TREE_NODE_FREE(clModule);
     return VINBERO_COMMON_STATUS_SUCCESS;
 }
 
@@ -324,8 +326,8 @@ vinbero_tcp_mt_epoll_handleRequest(struct vinbero_common_TlModule* tlModule, int
         VINBERO_COMMON_LOG_ERROR("timerfd_settime() failed");
     }
     GENC_TREE_NODE_FOR_EACH_CHILD(tlModule->module, index) {
-        struct vinbero_common_Module* childModule = &GENC_TREE_NODE_GET_CHILD(tlModule->module, index);
-        struct vinbero_common_ClModule* childClModule = &GENC_TREE_NODE_GET_CHILD(localTlModule->clModuleArray[clientSocket], index);
+        struct vinbero_common_Module* childModule = GENC_TREE_NODE_GET_CHILD(tlModule->module, index);
+        struct vinbero_common_ClModule* childClModule = GENC_TREE_NODE_GET_CHILD(localTlModule->clModuleArray[clientSocket], index);
         VINBERO_COMMON_CALL(CLSERVICE, call, childModule, &ret, childClModule);
         if(ret <= VINBERO_COMMON_STATUS_SUCCESS) {
             vinbero_tcp_mt_epoll_destroyChildClModules(localTlModule->clModuleArray[clientSocket]);
@@ -376,7 +378,7 @@ vinbero_tcp_mt_epoll_handleTimeout(struct vinbero_common_TlModule* tlModule, int
     read(timerFd, &clientTimerFdValue, sizeof(uint64_t));
     int clientSocket = localTlModule->clientSocketArray[timerFd];
     GENC_TREE_NODE_FOR_EACH_CHILD(tlModule->module, index) {
-        struct vinbero_common_ClModule* childClModule = &GENC_TREE_NODE_GET_CHILD(localTlModule->clModuleArray[clientSocket], index);
+        struct vinbero_common_ClModule* childClModule = GENC_TREE_NODE_GET_CHILD(localTlModule->clModuleArray[clientSocket], index);
         VINBERO_COMMON_CALL(CLOCAL, destroy, childClModule->tlModule->module, &ret, childClModule);
     }
     close(timerFd);
