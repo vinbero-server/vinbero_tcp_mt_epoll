@@ -23,8 +23,7 @@
 #include <vinbero/vinbero_interface_TLSERVICE.h>
 #include <vinbero/vinbero_interface_CLOCAL.h>
 #include <vinbero/vinbero_interface_CLSERVICE.h>
-#include <libgenc/genc_args.h>
-#include <libgenc/genc_cast.h>
+#include <libgenc/genc_Cast.h>
 #include <libgenc/genc_Tree.h>
 #include <gaio.h>
 #include "vinbero_tcp_mt_epoll_Version.h"
