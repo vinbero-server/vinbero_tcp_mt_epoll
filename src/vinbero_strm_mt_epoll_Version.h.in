@@ -1,0 +1,6 @@
+#ifndef _VINBERO_STRM_MT_EPOLL_VERSION_H
+#define _VINBERO_STRM_MT_EPOLL_VERSION_H
+
+#define VINBERO_STRM_MT_EPOLL_VERSION "@vinbero_strm_mt_epoll_version@"
+
+#endif
