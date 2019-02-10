@@ -1,6 +1,6 @@
-#ifndef _VINBERO_TCP_MT_EPOLL_VERSION_H
-#define _VINBERO_TCP_MT_EPOLL_VERSION_H
+#ifndef _VINBERO_STRM_MT_EPOLL_VERSION_H
+#define _VINBERO_STRM_MT_EPOLL_VERSION_H
 
-#define VINBERO_TCP_MT_EPOLL_VERSION "@vinbero_tcp_mt_epoll_version@"
+#define VINBERO_STRM_MT_EPOLL_VERSION "@vinbero_strm_mt_epoll_version@"
 
 #endif
