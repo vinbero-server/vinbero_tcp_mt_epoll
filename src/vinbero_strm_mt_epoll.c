@@ -45,6 +45,14 @@ struct vinbero_strm_mt_epoll_TlModule {
 VINBERO_IFACE_MODULE_FUNCTIONS;
 VINBERO_IFACE_TLOCAL_FUNCTIONS;
 VINBERO_IFACE_TLSERVICE_FUNCTIONS;
+VINBERO_COM_MODULE_META_INIT(
+    "vinbero_strm_mt_epoll",
+    VINBERO_STRM_MT_EPOLL_VERSION_MAJOR,
+    VINBERO_STRM_MT_EPOLL_VERSION_MINOR,
+    VINBERO_STRM_MT_EPOLL_VERSION_PATCH,
+    "BASIC",
+    "TLOCAL,TLSERVICE"
+);
 
 int
 vinbero_iface_MODULE_init(struct vinbero_com_Module* module) {
@@ -63,27 +71,6 @@ vinbero_iface_MODULE_init(struct vinbero_com_Module* module) {
     localModule->clientTimeout.it_value.tv_nsec = out;
     vinbero_com_Config_getInt(module->config, module, "vinbero_strm_mt_epoll.clientTimeoutNanoSeconds", &out, 0);
     localModule->clientTimeout.it_interval.tv_nsec = out;
-/*
-    GENC_TREE_NODE_FOR_EACH_CHILD(module, index) {
-        struct vinbero_com_Module* childModule = &GENC_TREE_NODE_GET_CHILD(module, index);
-        struct vinbero_strm_mt_epoll_iface childiface;
-        VINBERO_IFACE_TLOCAL_DLSYM(&childiface, &childModule->dlHandle, &ret);
-        if(ret < VINBERO_COM_STATUS_SUCCESS) {
-            VINBERO_COM_LOG_ERROR("module %s doesn't satisfy ITLOCAL iface", childModule->id);
-            return ret;
-        }
-        VINBERO_ICLOCAL_DLSYM(&childiface, &childModule->dlHandle, &ret);
-        if(ret < VINBERO_COM_STATUS_SUCCESS) {
-            VINBERO_COM_LOG_ERROR("module %s doesn't satisfy ICLOCAL iface", childModule->id);
-            return ret;
-        }
-        VINBERO_ICLSERVICE_DLSYM(&childiface, &childModule->dlHandle, &ret);
-        if(ret < VINBERO_COM_STATUS_SUCCESS) {
-            VINBERO_COM_LOG_ERROR("module %s doesn't satisfy ICLSERVICE iface", childModule->id);
-            return ret;
-        }
-    }
-*/
     return VINBERO_COM_STATUS_SUCCESS;
 }
 
