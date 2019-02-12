@@ -59,8 +59,6 @@ int
 vinbero_iface_MODULE_init(struct vinbero_com_Module* module) {
     VINBERO_COM_LOG_TRACE2();
     int ret;
-    module->name = "vinbero_strm_mt_epoll";
-    module->version = VINBERO_STRM_MT_EPOLL_VERSION;
     module->localModule.pointer = malloc(1 * sizeof(struct vinbero_strm_mt_epoll_Module));
     struct vinbero_strm_mt_epoll_Module* localModule = module->localModule.pointer;
     int out;
