@@ -45,13 +45,14 @@ struct vinbero_strm_mt_epoll_TlModule {
 VINBERO_IFACE_MODULE_FUNCTIONS;
 VINBERO_IFACE_TLOCAL_FUNCTIONS;
 VINBERO_IFACE_TLSERVICE_FUNCTIONS;
+
 VINBERO_COM_MODULE_META_INIT(
     "vinbero_strm_mt_epoll",
     VINBERO_STRM_MT_EPOLL_VERSION_MAJOR,
     VINBERO_STRM_MT_EPOLL_VERSION_MINOR,
     VINBERO_STRM_MT_EPOLL_VERSION_PATCH,
-    "BASIC",
-    "TLOCAL,TLSERVICE"
+    "BASIC,TLOCAL,TLSERVICE",
+    "TLOCAL,CLOCAL"
 );
 
 int
@@ -104,15 +105,6 @@ vinbero_iface_TLOCAL_init(struct vinbero_com_TlModule* tlModule) {
     localTlModule->clientIoMethods.fstat = gaio_Fd_fstat;
     localTlModule->clientIoMethods.fileno = gaio_Fd_fileno;
     localTlModule->clientIoMethods.close = gaio_Fd_close;
-
-/*
-    GENC_TREE_NODE_FOR_EACH_CHILD(tlModule, index) {
-        struct vinbero_com_TlModule* childTlModule = &GENC_TREE_NODE_GET_CHILD(tlModule, index);
-        VINBERO_COM_CALL(TLOCAL, init, childTlModule->module, &ret, childTlModule);
-        if(ret < VINBERO_COM_STATUS_SUCCESS)
-            return ret;
-    }
-*/
 
     return VINBERO_COM_STATUS_SUCCESS;
 }
