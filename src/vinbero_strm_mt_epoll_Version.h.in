@@ -1,6 +1,9 @@
 #ifndef _VINBERO_STRM_MT_EPOLL_VERSION_H
 #define _VINBERO_STRM_MT_EPOLL_VERSION_H
 
-#define VINBERO_STRM_MT_EPOLL_VERSION "@vinbero_strm_mt_epoll_version@"
+#define VINBERO_STRM_MT_EPOLL_VERSION "@version@"
+#define VINBERO_STRM_MT_EPOLL_VERSION_MAJOR @version_major@
+#define VINBERO_STRM_MT_EPOLL_VERSION_MINOR @version_minor@
+#define VINBERO_STRM_MT_EPOLL_VERSION_PATCH @version_patch@
 
 #endif
