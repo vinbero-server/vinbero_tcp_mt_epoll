@@ -1,14 +1,23 @@
 add_library(vinbero_strm_mt_epoll MODULE vinbero_strm_mt_epoll.c)
-set_target_properties(vinbero_strm_mt_epoll PROPERTIES PREFIX "")
-set_target_properties(vinbero_strm_mt_epoll PROPERTIES VERSION ${version}
-                                           SOVERSION ${soversion}
-                                           PUBLIC_HEADER "")
+target_sources(vinbero_strm_mt_epoll PRIVATE vinbero_strm_mt_epoll.c)
+target_compile_options(vinbero_strm_mt_epoll PRIVATE -Wall)
+set_target_properties(
+    vinbero_strm_mt_epoll
+    PROPERTIES
+    C_STANDARD 11
+    PREFIX ""
+    VERSION ${version}
+    SOVERSION ${soversion}
+    PUBLIC_HEADER ""
+)
 
 find_library(fastdl libfastdl.so REQUIRED)
-find_library(gaio libgaio.so.0.3 REQUIRED)
-find_library(vinbero_com libvinbero_com.so REQUIRED)
-target_link_libraries(vinbero_strm_mt_epoll ${vinbero_com} ${fastdl} ${gaio})
+find_library(gaio libgaio.so REQUIRED)
+find_package(vinbero_com REQUIRED)
+target_link_libraries(vinbero_strm_mt_epoll vinbero_com::vinbero_com ${fastdl} ${gaio})
 
-install(TARGETS vinbero_strm_mt_epoll
-        LIBRARY DESTINATION lib/vinbero
-        PUBLIC_HEADER DESTINATION include/vinbero)
+install(
+    TARGETS vinbero_strm_mt_epoll
+    LIBRARY DESTINATION lib/vinbero
+    PUBLIC_HEADER DESTINATION include/vinbero
+)

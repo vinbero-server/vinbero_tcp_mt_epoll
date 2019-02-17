@@ -60,7 +60,6 @@ struct vinbero_strm_mt_epoll_TlModule {
 int
 vinbero_iface_MODULE_init(struct vinbero_com_Module* module) {
     VINBERO_COM_LOG_TRACE2();
-    int ret;
     module->localModule.pointer = malloc(1 * sizeof(struct vinbero_strm_mt_epoll_Module));
     struct vinbero_strm_mt_epoll_Module* localModule = module->localModule.pointer;
     int out;
@@ -83,7 +82,6 @@ vinbero_iface_MODULE_rInit(struct vinbero_com_Module* module) {
 int
 vinbero_iface_TLOCAL_init(struct vinbero_com_TlModule* tlModule) {
     VINBERO_COM_LOG_TRACE2();
-    int ret;
     tlModule->localTlModule.pointer = malloc(sizeof(struct vinbero_strm_mt_epoll_TlModule));
     struct vinbero_strm_mt_epoll_TlModule* localTlModule = tlModule->localTlModule.pointer;
     int workerCount;
@@ -273,6 +271,7 @@ vinbero_strm_mt_epoll_handleConnection(struct vinbero_com_TlModule* tlModule, in
     if((ret = vinbero_strm_mt_epoll_loadChildClModules(localTlModule->clModuleArray[clientSocket])) < VINBERO_COM_STATUS_SUCCESS) {
         VINBERO_COM_LOG_ERROR("vinbero_strm_mt_epoll_loadChildClModules() failed");
         vinbero_strm_mt_epoll_destroyChildClModules(localTlModule->clModuleArray[clientSocket]); // what if this also failed? (FATAL)
+        vinbero_strm_mt_epoll_rDestroyChildClModules(localTlModule->clModuleArray[clientSocket]);
         free(localTlModule->clModuleArray[clientSocket]);
         close(clientSocket);
         close(localTlModule->clientTimerFdArray[clientSocket]);
@@ -284,6 +283,19 @@ vinbero_strm_mt_epoll_handleConnection(struct vinbero_com_TlModule* tlModule, in
     if((ret = vinbero_strm_mt_epoll_initChildClModules(localTlModule->clModuleArray[clientSocket])) < VINBERO_COM_STATUS_SUCCESS) {
         VINBERO_COM_LOG_ERROR("vinbero_strm_mt_epoll_initChildClModules() failed");
         vinbero_strm_mt_epoll_destroyChildClModules(localTlModule->clModuleArray[clientSocket]); // what if this also failed? (FATAL)
+        vinbero_strm_mt_epoll_rDestroyChildClModules(localTlModule->clModuleArray[clientSocket]);
+        free(localTlModule->clModuleArray[clientSocket]);
+        close(clientSocket);
+        close(localTlModule->clientTimerFdArray[clientSocket]);
+        localTlModule->clModuleArray[clientSocket] = NULL;
+        localTlModule->clientSocketArray[localTlModule->clientTimerFdArray[clientSocket]] = -1;
+        localTlModule->clientTimerFdArray[clientSocket] = -1;
+        return;
+    }
+    if((ret = vinbero_strm_mt_epoll_rInitChildClModules(localTlModule->clModuleArray[clientSocket])) < VINBERO_COM_STATUS_SUCCESS) {
+        VINBERO_COM_LOG_ERROR("vinbero_strm_mt_epoll_rInitChildClModules() failed");
+        vinbero_strm_mt_epoll_destroyChildClModules(localTlModule->clModuleArray[clientSocket]); // what if this also failed? (FATAL)
+        vinbero_strm_mt_epoll_rDestroyChildClModules(localTlModule->clModuleArray[clientSocket]);
         free(localTlModule->clModuleArray[clientSocket]);
         close(clientSocket);
         close(localTlModule->clientTimerFdArray[clientSocket]);
@@ -302,6 +314,7 @@ vinbero_strm_mt_epoll_handleRequest(struct vinbero_com_TlModule* tlModule, int* 
     int ret;
     if(timerfd_settime(localTlModule->clientTimerFdArray[clientSocket], 0, &localModule->clientTimeout, NULL) == -1) {
         VINBERO_COM_LOG_ERROR("timerfd_settime() failed");
+        return VINBERO_COM_ERROR_UNKNOWN;
     }
     GENC_TREE_NODE_FOREACH(tlModule->module, index) {
         struct vinbero_com_Module* childModule = GENC_TREE_NODE_RAW_GET(tlModule->module, index);
@@ -318,6 +331,7 @@ vinbero_strm_mt_epoll_handleRequest(struct vinbero_com_TlModule* tlModule, int* 
             return ret;
         }
     }
+    return VINBERO_COM_STATUS_SUCCESS;
 }
 
 static void
@@ -333,7 +347,7 @@ vinbero_strm_mt_epoll_handleDisconnection(struct vinbero_com_TlModule* tlModule,
     localTlModule->clientTimerFdArray[clientSocket] = -1;
 }
 
-static int
+static void
 vinbero_strm_mt_epoll_handleError(struct vinbero_com_TlModule* tlModule, int* serverSocket, int clientSocket) {
     VINBERO_COM_LOG_TRACE2();
     struct vinbero_strm_mt_epoll_TlModule* localTlModule = tlModule->localTlModule.pointer;
@@ -347,7 +361,7 @@ vinbero_strm_mt_epoll_handleError(struct vinbero_com_TlModule* tlModule, int* se
     localTlModule->clientTimerFdArray[clientSocket] = -1;
 }
 
-static int
+static void
 vinbero_strm_mt_epoll_handleTimeout(struct vinbero_com_TlModule* tlModule, int* serverSocket, int timerFd) {
     VINBERO_COM_LOG_TRACE2();
     int ret;
@@ -368,7 +382,6 @@ vinbero_strm_mt_epoll_handleTimeout(struct vinbero_com_TlModule* tlModule, int* 
 static void
 vinbero_strm_mt_epoll_handleUnexpected(struct vinbero_com_TlModule* tlModule, int* serverSocket, int fd) {
     VINBERO_COM_LOG_TRACE2();
-    struct vinbero_strm_mt_epoll_TlModule* localTlModule = tlModule->localTlModule.pointer;
     VINBERO_COM_LOG_FATAL("Unexpected file descriptor %d", fd); // This shouldn't happen at all
 }
 
@@ -467,7 +480,6 @@ vinbero_iface_MODULE_destroy(struct vinbero_com_Module* module) {
 int
 vinbero_iface_MODULE_rDestroy(struct vinbero_com_Module* module) {
     VINBERO_COM_LOG_TRACE2();
-    struct vinbero_strm_mt_epoll_Module* localModule = module->localModule.pointer;
     free(module->localModule.pointer);
     return VINBERO_COM_STATUS_SUCCESS;
 }
