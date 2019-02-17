@@ -317,20 +317,29 @@ vinbero_strm_mt_epoll_handleRequest(struct vinbero_com_TlModule* tlModule, int* 
         return VINBERO_COM_ERROR_UNKNOWN;
     }
     GENC_TREE_NODE_FOREACH(tlModule->module, index) {
-        struct vinbero_com_Module* childModule = GENC_TREE_NODE_RAW_GET(tlModule->module, index);
-        struct vinbero_com_ClModule* childClModule = GENC_TREE_NODE_RAW_GET(localTlModule->clModuleArray[clientSocket], index);
-        VINBERO_COM_CALL(CLSERVICE, call, childModule, &ret, childClModule);
-        if(ret <= VINBERO_COM_STATUS_SUCCESS) {
-            vinbero_strm_mt_epoll_destroyChildClModules(localTlModule->clModuleArray[clientSocket]);
-            free(localTlModule->clModuleArray[clientSocket]);
-            close(localTlModule->clientSocketArray[localTlModule->clientTimerFdArray[clientSocket]]); // to prevent double close
-            close(localTlModule->clientTimerFdArray[clientSocket]);
-            localTlModule->clModuleArray[clientSocket] = NULL;
-            localTlModule->clientSocketArray[localTlModule->clientTimerFdArray[clientSocket]] = -1;
-            localTlModule->clientTimerFdArray[clientSocket] = -1;
-            return ret;
-        }
+        do {
+            struct vinbero_com_Module* childModule = GENC_TREE_NODE_RAW_GET(tlModule->module, index);
+            struct vinbero_com_ClModule* childClModule = GENC_TREE_NODE_RAW_GET(localTlModule->clModuleArray[clientSocket], index);
+            VINBERO_COM_CALL(CLSERVICE, call, childModule, &ret, childClModule);
+            if(ret < VINBERO_COM_STATUS_SUCCESS) {
+                vinbero_strm_mt_epoll_destroyChildClModules(localTlModule->clModuleArray[clientSocket]);
+                free(localTlModule->clModuleArray[clientSocket]);
+                close(localTlModule->clientSocketArray[localTlModule->clientTimerFdArray[clientSocket]]); // to prevent double close
+                close(localTlModule->clientTimerFdArray[clientSocket]);
+                localTlModule->clModuleArray[clientSocket] = NULL;
+                localTlModule->clientSocketArray[localTlModule->clientTimerFdArray[clientSocket]] = -1;
+                localTlModule->clientTimerFdArray[clientSocket] = -1;
+                return ret;
+            }
+        } while(ret == VINBERO_COM_STATUS_CONTINUE);
     }
+    vinbero_strm_mt_epoll_destroyChildClModules(localTlModule->clModuleArray[clientSocket]);
+    free(localTlModule->clModuleArray[clientSocket]);
+    close(localTlModule->clientSocketArray[localTlModule->clientTimerFdArray[clientSocket]]); // to prevent double close
+    close(localTlModule->clientTimerFdArray[clientSocket]);
+    localTlModule->clModuleArray[clientSocket] = NULL;
+    localTlModule->clientSocketArray[localTlModule->clientTimerFdArray[clientSocket]] = -1;
+    localTlModule->clientTimerFdArray[clientSocket] = -1;
     return VINBERO_COM_STATUS_SUCCESS;
 }
 

@@ -11,10 +11,15 @@ set_target_properties(
     PUBLIC_HEADER ""
 )
 
-find_library(fastdl libfastdl.so REQUIRED)
-find_library(gaio libgaio.so REQUIRED)
+find_package(fastdl REQUIRED)
+find_package(gaio REQUIRED)
 find_package(vinbero_com REQUIRED)
-target_link_libraries(vinbero_strm_mt_epoll vinbero_com::vinbero_com ${fastdl} ${gaio})
+target_link_libraries(
+    vinbero_strm_mt_epoll
+    vinbero_com::vinbero_com
+    fastdl::fastdl
+    gaio::gaio
+)
 
 install(
     TARGETS vinbero_strm_mt_epoll
