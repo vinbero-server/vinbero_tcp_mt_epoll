@@ -185,11 +185,19 @@ vinbero_strm_mt_epoll_rDestroyChildClModules(struct vinbero_com_ClModule* clModu
     GENC_TREE_NODE_FOREACH(clModule, index) {
         struct vinbero_com_ClModule* childClModule = GENC_TREE_NODE_RAW_GET(clModule, index);
         ret = vinbero_strm_mt_epoll_rDestroyChildClModules(childClModule);
-        if(ret < VINBERO_COM_STATUS_SUCCESS)
+        if(ret < VINBERO_COM_STATUS_SUCCESS) {
+            VINBERO_COM_LOG_ERROR("vinbero_strm_mt_epoll_rDstroyChildClModules() FAILED");
+            GENC_TREE_NODE_FREE(childClModule);
+            free(childClModule);
             return ret;
+        }
         VINBERO_COM_CALL(CLOCAL, rDestroy, childClModule->tlModule->module, &ret, childClModule);
-        if(ret < VINBERO_COM_STATUS_SUCCESS)
+        if(ret < VINBERO_COM_STATUS_SUCCESS) {
+            VINBERO_COM_LOG_ERROR("vinbero_iface_CLOCAL_rDestroy() FAILED");
+            GENC_TREE_NODE_FREE(childClModule);
+            free(childClModule);
             return ret;
+        }
         GENC_TREE_NODE_FREE(childClModule);
         free(childClModule);
     }
@@ -201,6 +209,7 @@ static void vinbero_strm_mt_epoll_destroyClient(struct vinbero_com_TlModule* tlM
     vinbero_strm_mt_epoll_destroyChildClModules(localTlModule->clModuleArray[clientSocket]);
     vinbero_strm_mt_epoll_rDestroyChildClModules(localTlModule->clModuleArray[clientSocket]);
     free(localTlModule->clModuleArray[clientSocket]->arg);
+    GENC_TREE_NODE_FREE(localTlModule->clModuleArray[clientSocket]);
     free(localTlModule->clModuleArray[clientSocket]);
     close(clientSocket); // to prevent double close
     close(timerFd);
@@ -220,32 +229,30 @@ vinbero_strm_mt_epoll_handleConnection(struct vinbero_com_TlModule* tlModule, in
     struct epoll_event epollEvent;
     memset(&epollEvent, 0, 1 * sizeof(struct epoll_event));
     if((clientSocket = accept(*serverSocket, NULL, NULL)) == -1) {
-        if(errno == EAGAIN)
-            VINBERO_COM_LOG_DEBUG("Other thread accepted the client");
-        else 
-            VINBERO_COM_LOG_ERROR("accept() failed");
+        if(errno != EAGAIN)
+            VINBERO_COM_LOG_ERROR("accept() FAILED");
         return;
     }
-    VINBERO_COM_LOG_DEBUG("Accepted client, socket number is %d", clientSocket);
+    VINBERO_COM_LOG_DEBUG("ACCEPTED CLIENT SOCKET %d", clientSocket);
     if(clientSocket > (localTlModule->clientArraySize - 1) - 1) { // '-1': room for timerfd
-        VINBERO_COM_LOG_ERROR("unable to accept more clients");
+        VINBERO_COM_LOG_ERROR("UNABLE TO ACCEPT CLIENTS ANYMORE");
         close(clientSocket);
         return; 
     }
     if(fcntl(clientSocket, F_SETFL, fcntl(clientSocket, F_GETFL, 0) | O_NONBLOCK) == -1) {
-        VINBERO_COM_LOG_ERROR("fcntl() failed");
+        VINBERO_COM_LOG_ERROR("fcntl() FAILED");
         close(clientSocket);
         return;
     }
     epollEvent.events = EPOLLET | EPOLLIN | EPOLLRDHUP | EPOLLHUP;
     epollEvent.data.fd = clientSocket;
     if(epoll_ctl(epollFd, EPOLL_CTL_ADD, clientSocket, &epollEvent) == -1) {
-        VINBERO_COM_LOG_ERROR("epoll_ctl failed()");
+        VINBERO_COM_LOG_ERROR("epoll_ctl() FAILED");
         close(clientSocket);
         return;
     }
     if((localTlModule->clientTimerFdArray[clientSocket] = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK)) == -1) {
-        VINBERO_COM_LOG_ERROR("timerfd_create() failed");
+        VINBERO_COM_LOG_ERROR("timerfd_create() FAILED");
         close(clientSocket);
         return;
     }
@@ -284,17 +291,17 @@ vinbero_strm_mt_epoll_handleConnection(struct vinbero_com_TlModule* tlModule, in
     GENC_TREE_NODE_INIT(localTlModule->clModuleArray[clientSocket]);
     timerFd = localTlModule->clientTimerFdArray[clientSocket];
     if((ret = vinbero_strm_mt_epoll_loadChildClModules(localTlModule->clModuleArray[clientSocket])) < VINBERO_COM_STATUS_SUCCESS) {
-        VINBERO_COM_LOG_ERROR("vinbero_strm_mt_epoll_loadChildClModules() failed");
+        VINBERO_COM_LOG_ERROR("vinbero_strm_mt_epoll_loadChildClModules() FAILED");
         vinbero_strm_mt_epoll_destroyClient(tlModule, clientSocket, timerFd);
         return;
     }
     if((ret = vinbero_strm_mt_epoll_initChildClModules(localTlModule->clModuleArray[clientSocket])) < VINBERO_COM_STATUS_SUCCESS) {
-        VINBERO_COM_LOG_ERROR("vinbero_strm_mt_epoll_initChildClModules() failed");
+        VINBERO_COM_LOG_ERROR("vinbero_strm_mt_epoll_initChildClModules() FAILED");
         vinbero_strm_mt_epoll_destroyClient(tlModule, clientSocket, timerFd);
         return;
     }
     if((ret = vinbero_strm_mt_epoll_rInitChildClModules(localTlModule->clModuleArray[clientSocket])) < VINBERO_COM_STATUS_SUCCESS) {
-        VINBERO_COM_LOG_ERROR("vinbero_strm_mt_epoll_rInitChildClModules() failed");
+        VINBERO_COM_LOG_ERROR("vinbero_strm_mt_epoll_rInitChildClModules() FAILED");
         vinbero_strm_mt_epoll_destroyClient(tlModule, clientSocket, timerFd);
         return;
     }
@@ -307,7 +314,7 @@ vinbero_strm_mt_epoll_handleRequest(struct vinbero_com_TlModule* tlModule, int* 
     struct vinbero_strm_mt_epoll_TlModule* localTlModule = tlModule->localTlModule.pointer;
     int ret;
     if(timerfd_settime(localTlModule->clientTimerFdArray[clientSocket], 0, &localModule->clientTimeout, NULL) == -1) {
-        VINBERO_COM_LOG_ERROR("timerfd_settime() failed");
+        VINBERO_COM_LOG_ERROR("timerfd_settime() FAILED");
         return VINBERO_COM_ERROR_UNKNOWN;
     }
     GENC_TREE_NODE_FOREACH(tlModule->module, index) {
@@ -321,7 +328,6 @@ vinbero_strm_mt_epoll_handleRequest(struct vinbero_com_TlModule* tlModule, int* 
             }
         } while(ret == VINBERO_COM_STATUS_CONTINUE);
     }
-    vinbero_strm_mt_epoll_destroyClient(tlModule, clientSocket, timerFd);
     return VINBERO_COM_STATUS_SUCCESS;
 }
 
@@ -331,7 +337,7 @@ vinbero_iface_TLSERVICE_call(struct vinbero_com_TlModule* tlModule) {
     struct vinbero_strm_mt_epoll_TlModule* localTlModule = tlModule->localTlModule.pointer;
     int* serverSocket = tlModule->arg;
     if(fcntl(*serverSocket, F_SETFL, fcntl(*serverSocket, F_GETFL, 0) | O_NONBLOCK) == -1) {
-        VINBERO_COM_LOG_ERROR("Setting non-blocking socket has failed");
+        VINBERO_COM_LOG_ERROR("FAILED TO SET NON-BLOCKING FOR SERVER SOCKET");
         return VINBERO_COM_ERROR_IO;
     }
     int epollFd = epoll_create1(0);
@@ -348,32 +354,29 @@ vinbero_iface_TLSERVICE_call(struct vinbero_com_TlModule* tlModule) {
 
     for(int epollEventCount;;) {
         if((epollEventCount = epoll_wait(epollFd, localTlModule->epollEventArray, localTlModule->epollEventArraySize, -1)) == -1) {
-            VINBERO_COM_LOG_ERROR("%s: %u: %s", __FILE__, __LINE__, __FUNCTION__);
+            VINBERO_COM_LOG_ERROR("epoll_wait() FAILED");
             return VINBERO_COM_ERROR_UNKNOWN;
         }
         for(int index = 0; index < epollEventCount; ++index) {
             if(localTlModule->epollEventArray[index].data.fd == *tlModule->exitEventFd) { // exitEventFd
-                VINBERO_COM_LOG_DEBUG("Exit event received");
+                VINBERO_COM_LOG_DEBUG("EXIT EVENT RECEIVED");
                 uint64_t counter;
                 read(*tlModule->exitEventFd, &counter, sizeof(counter));
                 return VINBERO_COM_STATUS_SUCCESS;
             } else if(localTlModule->epollEventArray[index].data.fd == *serverSocket) { // serverSocket
-                VINBERO_COM_LOG_DEBUG("Trying to accept new client");
                 vinbero_strm_mt_epoll_handleConnection(tlModule, epollFd, serverSocket);
             } else if(localTlModule->clientTimerFdArray[localTlModule->epollEventArray[index].data.fd] != -1 &&
                       localTlModule->clientSocketArray[localTlModule->epollEventArray[index].data.fd] == -1) { // clientSocket
                 int clientSocket = localTlModule->epollEventArray[index].data.fd;
                 int timerFd = localTlModule->clientTimerFdArray[clientSocket];
                 if(localTlModule->epollEventArray[index].events & EPOLLIN) {
-                    VINBERO_COM_LOG_DEBUG("Client socket %d is readable", clientSocket);
+                    VINBERO_COM_LOG_DEBUG("CLIENT SOCKET %d IS READABLE", clientSocket);
                     vinbero_strm_mt_epoll_handleRequest(tlModule, serverSocket, clientSocket, timerFd);
-                } else if(localTlModule->epollEventArray[index].events & EPOLLRDHUP) {
-                    VINBERO_COM_LOG_DEBUG("Client socket %d is disconnected", clientSocket);
-                    vinbero_strm_mt_epoll_destroyClient(tlModule, clientSocket, timerFd);
-                } else if(localTlModule->epollEventArray[index].events & EPOLLHUP) {
-                    VINBERO_COM_LOG_WARN("Client socket %d has error", clientSocket);
-                    vinbero_strm_mt_epoll_destroyClient(tlModule, clientSocket, timerFd);
-                }
+                } else if(localTlModule->epollEventArray[index].events & EPOLLRDHUP)
+                    VINBERO_COM_LOG_DEBUG("CLIENT SOCKET %d IS DISCONNECTED", clientSocket);
+                else if(localTlModule->epollEventArray[index].events & EPOLLHUP)
+                    VINBERO_COM_LOG_WARN("CLIENT SOCKET %d HAS ERROR", clientSocket);
+                vinbero_strm_mt_epoll_destroyClient(tlModule, clientSocket, timerFd);
             } else if(localTlModule->clientSocketArray[localTlModule->epollEventArray[index].data.fd] != -1 &&
                     localTlModule->clientTimerFdArray[localTlModule->epollEventArray[index].data.fd] == -1 &&
                     localTlModule->epollEventArray[index].events & EPOLLIN) { // clientTimerFd
@@ -381,11 +384,11 @@ vinbero_iface_TLSERVICE_call(struct vinbero_com_TlModule* tlModule) {
                 int clientSocket = localTlModule->clientSocketArray[timerFd];
                 uint64_t clientTimerFdValue;
                 read(timerFd, &clientTimerFdValue, sizeof(uint64_t));
-                VINBERO_COM_LOG_WARN("Client socket %d timeout", clientSocket);
+                VINBERO_COM_LOG_WARN("CLIENT SOCKET %d TIMEOUT", clientSocket);
                 vinbero_strm_mt_epoll_destroyClient(tlModule, clientSocket, timerFd);
 
             } else {
-                VINBERO_COM_LOG_FATAL("Unexpected file descriptor");
+                VINBERO_COM_LOG_FATAL("UNEXPECTED FILE DESCRIPTOR");
                 return VINBERO_COM_ERROR_UNKNOWN;
             }
         }
