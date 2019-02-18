@@ -322,10 +322,8 @@ vinbero_strm_mt_epoll_handleRequest(struct vinbero_com_TlModule* tlModule, int* 
             struct vinbero_com_Module* childModule = GENC_TREE_NODE_RAW_GET(tlModule->module, index);
             struct vinbero_com_ClModule* childClModule = GENC_TREE_NODE_RAW_GET(localTlModule->clModuleArray[clientSocket], index);
             VINBERO_COM_CALL(CLSERVICE, call, childModule, &ret, childClModule);
-            if(ret < VINBERO_COM_STATUS_SUCCESS) {
-                vinbero_strm_mt_epoll_destroyClient(tlModule, clientSocket, timerFd);
+            if(ret < VINBERO_COM_STATUS_SUCCESS)
                 return ret;
-            }
         } while(ret == VINBERO_COM_STATUS_CONTINUE);
     }
     return VINBERO_COM_STATUS_SUCCESS;
@@ -416,6 +414,7 @@ vinbero_iface_TLOCAL_rDestroy(struct vinbero_com_TlModule* tlModule) {
                 free(localTlModule->clModuleArray[index]);
         }
         free(localTlModule->clModuleArray);
+        free(localTlModule);
     }
     return VINBERO_COM_STATUS_SUCCESS;
 }
