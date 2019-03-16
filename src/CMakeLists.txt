@@ -19,6 +19,7 @@ target_include_directories(
     vinbero_strm_mt_epoll
     PRIVATE
     ${PROJECT_BINARY_DIR}
+    ${PROJECT_BINARY_DIR}/iface
 )
 
 target_link_libraries(
