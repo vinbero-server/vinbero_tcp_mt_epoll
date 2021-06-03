@@ -204,7 +204,8 @@ vinbero_strm_mt_epoll_rDestroyChildClModules(struct vinbero_com_ClModule* clModu
     return VINBERO_COM_STATUS_SUCCESS;
 }
 
-static void vinbero_strm_mt_epoll_destroyClient(struct vinbero_com_TlModule* tlModule, int clientSocket, int timerFd) {
+static void
+vinbero_strm_mt_epoll_destroyClient(struct vinbero_com_TlModule* tlModule, int clientSocket, int timerFd) {
     struct vinbero_strm_mt_epoll_TlModule* localTlModule = tlModule->localTlModule.pointer;
     vinbero_strm_mt_epoll_destroyChildClModules(localTlModule->clModuleArray[clientSocket]);
     vinbero_strm_mt_epoll_rDestroyChildClModules(localTlModule->clModuleArray[clientSocket]);
